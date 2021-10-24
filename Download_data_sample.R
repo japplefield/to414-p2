@@ -1,0 +1,6 @@
+# install.packages("devtools")
+# install.packages("nflfastR")
+# install.packages("gsisdecoder")
+library(nflfastR)
+future::plan("multisession")
+pbp <- load_pbp(2019:2020, file_type = "qs")
