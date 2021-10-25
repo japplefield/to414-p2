@@ -9,7 +9,8 @@ The purpose of this analysis is to provide football coaches, players, and fans w
 # Dataset Information
 
 **Data Summary:**
-We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expanded into seasons pre-2010 if we either want more data, or want to test our model on additional seasons) . We initially found this dataset on Kaggle. The data was scraped from NFL data by Carnegie Melon researchers from NFL databases. The source dataset is too large to keep in the git repository so we had to use the R package “nflfastR” (built from the same Kaggle dataset) to extract data.
+
+We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expanded into seasons pre-2010 if we either want more data, or want to test our model on additional seasons) . We initially found [this](https://www.kaggle.com/maxhorowitz/nflplaybyplay2009to2016) dataset on Kaggle. The data was scraped from NFL data by Carnegie Melon researchers from NFL databases. The source dataset is too large to keep in the git repository so we had to use [this](https://www.nflfastr.com/) R package `nflfastR` (built from the same Kaggle dataset) to extract data.
 
 **Data Structure:**
 
@@ -39,13 +40,17 @@ In addition, one challenge we may face is the time period we choose to use. We c
 This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent on this project because it can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this  spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
 
 # Data Retrieval
-```{r}
+
+```r
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
 #install.packages("cli")
+
 library(cli)
 library(nflfastR)
+
 future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
+str(pbp)
 ```

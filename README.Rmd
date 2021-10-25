@@ -22,7 +22,8 @@ The purpose of this analysis is to provide football coaches, players, and fans w
 # Dataset Information
 
 **Data Summary:**
-We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expanded into seasons pre-2010 if we either want more data, or want to test our model on additional seasons) . We initially found this dataset on Kaggle. The data was scraped from NFL data by Carnegie Melon researchers from NFL databases. The source dataset is too large to keep in the git repository so we had to use the R package “nflfastR” (built from the same Kaggle dataset) to extract data.
+
+We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expanded into seasons pre-2010 if we either want more data, or want to test our model on additional seasons) . We initially found [this](https://www.kaggle.com/maxhorowitz/nflplaybyplay2009to2016) dataset on Kaggle. The data was scraped from NFL data by Carnegie Melon researchers from NFL databases. The source dataset is too large to keep in the git repository so we had to use [this](https://www.nflfastr.com/) R package `nflfastR` (built from the same Kaggle dataset) to extract data.
 
 **Data Structure:**
 
@@ -63,5 +64,5 @@ library(nflfastR)
 
 future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
-
+str(pbp)
 ```
