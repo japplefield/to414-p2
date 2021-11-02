@@ -55,3 +55,7 @@ future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
 str(pbp)
 ```
+
+# Contributors
+
+The following people contributed to this project: [Justin Applefield](https://github.com/japplefield).
