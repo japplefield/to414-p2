@@ -3,10 +3,6 @@
 ### Hip Hip Array
 ### Due Dec 12, 2021
 
-# Business Problem
-
-The purpose of this analysis is to provide football coaches, players, and fans with information and insight into the appropriate decision making that goes into a 4th down. We want to provide a model that will tell coaches whether or not it is worth it to either attempt a 4th down conversion, punt the football, or attempt a field goal. This problem is significant and important because 4th downs are a crucial part of any football game. Correctly deciding what approach to do can change the course of the game, and this is especially important when every point matters. By maximizing the expected points and win probability that comes with each decision, our audience can better understand the game of football and make these otherwise difficult judgement calls that have historically been made on instinct.
-
 # Dataset Information
 
 **Data Summary:**
