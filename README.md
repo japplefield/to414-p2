@@ -58,4 +58,4 @@ str(pbp)
 
 # Contributors
 
-The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), Natalie Rice, [Sara Weber](https://github.com/saraweb33)
+The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), Natalie Rice, [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
