@@ -53,13 +53,11 @@ In addition, one challenge we may face is the time period we choose to use. We c
 This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent on this project because it can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this  spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
 
 # Data Retrieval
-```{r}
+```{r, cache=TRUE}
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
-#install.packages("cli")
 
-library(cli)
 library(nflfastR)
 
 future::plan("multisession")
