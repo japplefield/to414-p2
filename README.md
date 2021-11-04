@@ -46,9 +46,7 @@ This analysis is important to coaches, players, and fans for many reasons. Money
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
-#install.packages("cli")
 
-library(cli)
 library(nflfastR)
 
 future::plan("multisession")
