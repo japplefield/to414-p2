@@ -46,9 +46,7 @@ This analysis is important to coaches, players, and fans for many reasons. Money
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
-#install.packages("cli")
 
-library(cli)
 library(nflfastR)
 
 future::plan("multisession")
@@ -58,4 +56,4 @@ str(pbp)
 
 # Contributors
 
-The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp)., Natalie Rice 
+The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), Natalie Rice, [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
