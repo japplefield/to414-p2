@@ -6,6 +6,8 @@ pbp <- load_pbp(2010:2020, file_type = "qs")
 pbp$field_goal_result <- as.factor(pbp$field_goal_result)
 pbp$weather <- as.factor(pbp$weather)
 pbp$season_type <- as.factor(pbp$season_type)
+pbp$temp <- ifelse(is.na(pbp$temp), 72, pbp$temp)
+pbp$wind <- ifelse(is.na(pbp$wind), 0, pbp$wind)
 
 # Filter data to only analyze plays where the field goal was successful
 field_goals <- pbp[!is.na(pbp$field_goal_attempt) & pbp$field_goal_attempt == 1,]
@@ -14,9 +16,11 @@ non_blocked_field_goals$success <- ifelse(non_blocked_field_goals$field_goal_res
 
 
 ## Run Logistic Regression Model for successful field goal attempts
-pbp$field_goal_glm1 <- glm(success ~ pbp$weather + pbp$yardline_100 + pbp$game_seconds_remaining + 
-                         pbp$season_type + pbp$score_differential, data = pbp, family = binomial)
-summary(pbp$field_goal_glm1)
+field_goal_glm1 <- glm(success ~ temp + wind  + yardline_100 + game_seconds_remaining + 
+                         season_type + score_differential, data = non_blocked_field_goals, family = binomial)
+
+#note: fix the NA values for wind and temp for this to run smoothly
+summary(field_goal_glm1)
 
 ## Ann Model
 # Normalize data
