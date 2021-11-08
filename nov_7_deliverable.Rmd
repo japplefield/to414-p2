@@ -1,14 +1,14 @@
 ---
-title: "Project 2 Deliverable"
+title: "Project 2 Progress Update"
 author: "Hip Hip Array"
-date: "11/7/2021"
+date: "November 7, 2021"
+output:
   html_document: 
     code_folding: hide
     toc: true
     toc_depth: 2
     toc_float: true
     number_sections: true
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -157,11 +157,6 @@ library(gmodels)
 CrossTable(x = GFI_test_labels, y = GFI_test_pred, 
            prop.chisq=FALSE)
 ```
-
-
-## Preliminary Conclusions
-
- Based on models above, I believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
  
 # Field Goal Success
 
@@ -194,44 +189,44 @@ summary(field_goal_glm1)
 ### Getting Train and Test Samples
 ```{r}
 # Normalize data
-pbpmm <- as.data.frame(model.matrix(~.-1,pbp))
+field_goals <- select(field_goals, temp, wind, yardline_100, game_seconds_remaining, season_type, score_differential, success)
+
+field_goals_mm <- as.data.frame(model.matrix(~.-1,field_goals))
 
 set.seed(12345)
 
-pbp_random <- pbpmm[sample(nrow(pbpmm)), ]
-normalize <- function(x) {
-  rerturn ((x - min(x)) / (max(x) - min(x)))
-}
-pbp_norm <- as.data.frame(lapply(pbp_random, normalize))
+field_goals_random <- field_goals_mm[sample(nrow(field_goals_mm)), ]
+field_goals_norm <- as.data.frame(lapply(field_goals_random, normalize))
 
 # Test and traning data
-test_set <- sample(1:nrow(pbp_norm), 100000) #not sure about what value would be good to use
-pbp_train <- pbp_norm[-test_set, -match("field_goal_made", names(pbp_norm))]
-pbp_test <- pbp_norm[test_set, -match("field_goal_made", names(pbp_norm))]
+test_set <- sample(1:nrow(field_goals_norm), 2500) #not sure about what value would be good to use
+field_goals_train <- field_goals_norm[-test_set, -match("success", names(field_goals_norm))]
+field_goals_test <- field_goals_norm[test_set, -match("success", names(field_goals_norm))]
 
-pbp_train_labels <- pbp_norm[-test_set, "field_goal_made"]
-pbp_test_labels <- pbp_norm[test_set, "field_goal_made"]
+field_goals_train_labels <- field_goals_norm[-test_set, "success"]
+field_goals_test_labels <- field_goals_norm[test_set, "success"]
 
-pbp_train_ANN <- pbp_norm[-test_set, ] 
-pbp_test_ANN <- pbp_norm[test_set, ]
+field_goals_train_ANN <- field_goals_norm[-test_set, ] 
+field_goals_test_ANN <- field_goals_norm[test_set, ]
 ```
 
 ### Creating Ann Prediction
-```{r}
+```{r, cache=TRUE}
 library(neuralnet)
-pbp_model <- neuralnet(formula = pbp$field_goal_made ~ . , data = pbp_train_ANN)
+field_goals_model <- neuralnet(formula = success ~ . , data = field_goals_train_ANN, hidden = 3)
 
-model_results1 <- compute(pbp_model, pbp_test_ANN[-53])
+model_results1 <- neuralnet::compute(field_goals_model, field_goals_test_ANN[-8]) #TODO FIX
 predicted_field_goal_made <- model_results1$net.result
 
-prediction1 <- ifelse(predicted_field_goal_made >= 0.1, 1, 0)
+prediction1 <- ifelse(predicted_field_goal_made >= 0.1, 1, 0) #TODO FIX
 ```
 
 
 ### Ann Confusion Matrix
 ```{r}
-library(gmodels)
-CrossTable(x = pbp_test_labels, y = prediction1, prop.chisq = FALSE)
+prediction1 <- ifelse(predicted_field_goal_made >= 0.5, 1, 0) #TODO FIX
+confusionMatrix(as.factor(prediction1), as.factor(field_goals_test_ANN$success), positive='1')
+CrossTable(x=field_goals_test_ANN$success, y=prediction1, prop.chisq=FALSE)
 ```
 
 ## Run Knn Model
@@ -239,12 +234,12 @@ CrossTable(x = pbp_test_labels, y = prediction1, prop.chisq = FALSE)
 library(class)
 library(caret)
 
-knum <- sqrt(nrow(pbp_train))
+knum <- sqrt(nrow(field_goals_train))
 
-pbp_test_pred <- knn(train = pbp_train, test = pbp_test, cl = pbp_train_labels, k= knum)
+field_goals_test_pred <- knn(train = field_goals_train, test = field_goals_test, cl = field_goals_train_labels, k= knum)
 
 library(gmodels)
-CrossTable(x = pbp_test_labels, y= pbp_test_pred, prop.chisq=FALSE)
+CrossTable(x = field_goals_test_labels, y= field_goals_test_pred, prop.chisq=FALSE)
 
 ```
 
@@ -277,7 +272,18 @@ model1 <- lm(formula=end_spot ~ .-game_seconds_remaining -game_half -home_timeou
 summary(model1)
 ```
 
-### TODO: Split into train/test and measure accuracy
+# Preliminary Conclusions
 
-TODO
+Given that we still have about a month to work on the project, we believe our preliminary models show a fair amount of progress. We've summarized our progress in each prediction below.
 
+## Fourth Down Conversion Success
+
+Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
+
+## Field Goal Success
+
+The models built to predict field goal success are quite accurate, but they suffer from a lack of missed field goals in the data set. The data set is very skewed. The models, especially the KNN, could benefit from overweighting missed field goals. The ANN could also benefit from a different, deeper structure.
+
+## Expected Punt Distance
+
+The linear regression model has an adjusted R-squared of 0.54. I believe this is quite accurate already. We have yet to split the data into train and test sets to better evaluate the accuracy of the model. The model could also benefit by considering touchbacks as a separate case.
