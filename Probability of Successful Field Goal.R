@@ -8,12 +8,13 @@ pbp$weather <- as.factor(pbp$weather)
 pbp$season_type <- as.factor(pbp$season_type)
 
 # Filter data to only analyze plays where the field goal was successful
-#pbp$field_goal_made <- subset(pbp, pbp$field_goal_attempt == 1 & pbp$field_goal_result == 1)
-#pbp$field_goal_made <- ifelse(pbp$field_goal_result ==1, pbp$field_goal_result, NULL)
-#pbp$field_goal_made <- subset(pbp, pbp$field_goal_result == 1)
+field_goals <- pbp[!is.na(pbp$field_goal_attempt) & pbp$field_goal_attempt == 1,]
+non_blocked_field_goals <- field_goals[field_goals$field_goal_result != "blocked",]
+non_blocked_field_goals$success <- ifelse(non_blocked_field_goals$field_goal_result == "made", 1, 0)
+
 
 ## Run Logistic Regression Model for successful field goal attempts
-pbp$field_goal_glm1 <- glm(pbp$field_goal_made ~ pbp$weather + pbp$yardline_100 + pbp$game_seconds_remaining + 
+pbp$field_goal_glm1 <- glm(success ~ pbp$weather + pbp$yardline_100 + pbp$game_seconds_remaining + 
                          pbp$season_type + pbp$score_differential, data = pbp, family = binomial)
 summary(pbp$field_goal_glm1)
 
