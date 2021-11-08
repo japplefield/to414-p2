@@ -163,4 +163,121 @@ CrossTable(x = GFI_test_labels, y = GFI_test_pred,
 
  Based on models above, I believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
  
- 
+# Field Goal Success
+
+## Data Cleaning
+```{r}
+# Consider only non-blocked field goals
+field_goals <- pbp[!is.na(pbp$field_goal_attempt) & pbp$field_goal_attempt == 1,]
+field_goals <- field_goals[field_goals$field_goal_result != "blocked",]
+
+field_goals$field_goal_result <- as.factor(field_goals$field_goal_result)
+field_goals$weather <- as.factor(field_goals$weather)
+field_goals$season_type <- as.factor(field_goals$season_type)
+field_goals$temp <- ifelse(is.na(field_goals$temp), 72, field_goals$temp)
+field_goals$wind <- ifelse(is.na(field_goals$wind), 0, field_goals$wind)
+```
+
+
+## Run Logistic Regression Model for successful field goal attempts
+```{r}
+field_goal_glm1 <- glm(success ~ temp + wind  + yardline_100 + game_seconds_remaining + 
+                         season_type + score_differential, data = field_goals, family = binomial)
+
+summary(field_goal_glm1)
+```
+
+
+
+## ANN Model
+
+### Getting Train and Test Samples
+```{r}
+# Normalize data
+pbpmm <- as.data.frame(model.matrix(~.-1,pbp))
+
+set.seed(12345)
+
+pbp_random <- pbpmm[sample(nrow(pbpmm)), ]
+normalize <- function(x) {
+  rerturn ((x - min(x)) / (max(x) - min(x)))
+}
+pbp_norm <- as.data.frame(lapply(pbp_random, normalize))
+
+# Test and traning data
+test_set <- sample(1:nrow(pbp_norm), 100000) #not sure about what value would be good to use
+pbp_train <- pbp_norm[-test_set, -match("field_goal_made", names(pbp_norm))]
+pbp_test <- pbp_norm[test_set, -match("field_goal_made", names(pbp_norm))]
+
+pbp_train_labels <- pbp_norm[-test_set, "field_goal_made"]
+pbp_test_labels <- pbp_norm[test_set, "field_goal_made"]
+
+pbp_train_ANN <- pbp_norm[-test_set, ] 
+pbp_test_ANN <- pbp_norm[test_set, ]
+```
+
+### Creating Ann Prediction
+```{r}
+library(neuralnet)
+pbp_model <- neuralnet(formula = pbp$field_goal_made ~ . , data = pbp_train_ANN)
+
+model_results1 <- compute(pbp_model, pbp_test_ANN[-53])
+predicted_field_goal_made <- model_results1$net.result
+
+prediction1 <- ifelse(predicted_field_goal_made >= 0.1, 1, 0)
+```
+
+
+### Ann Confusion Matrix
+```{r}
+library(gmodels)
+CrossTable(x = pbp_test_labels, y = prediction1, prop.chisq = FALSE)
+```
+
+## Run Knn Model
+```{r}
+library(class)
+library(caret)
+
+knum <- sqrt(nrow(pbp_train))
+
+pbp_test_pred <- knn(train = pbp_train, test = pbp_test, cl = pbp_train_labels, k= knum)
+
+library(gmodels)
+CrossTable(x = pbp_test_labels, y= pbp_test_pred, prop.chisq=FALSE)
+
+```
+
+# Expected Punt Distance
+
+## Data Cleaning
+```{r}
+punts <- pbp[!is.na(pbp$play_type), ]
+punts$play_type <- as.factor(punts$play_type)
+summary(punts$play_type)
+
+# Simplifying assumption: Ignore all punts that end in a score, which represent less than 1% of observations
+punts <- punts[punts$play_type == "punt" & punts$series_result == "Punt",]
+punts$series_result <- as.factor(punts$series_result)
+punts$end_spot <- ifelse(punts$touchback, 75, 100 - punts$yardline_100 + punts$kick_distance - punts$return_yards)
+
+punts_relevant <- punts[,c("season_type", "posteam_type", "yardline_100", "week", "game_seconds_remaining", "game_half", "home_timeouts_remaining", "away_timeouts_remaining", "score_differential", "roof", "surface", "temp", "wind", "end_spot")]
+punts_relevant[sapply(punts_relevant, is.character)] <- lapply(punts_relevant[sapply(punts_relevant, is.character)], 
+                                       as.factor)
+punts_relevant$temp <- ifelse(is.na(punts_relevant$temp), 72, punts_relevant$temp)
+punts_relevant$wind <- ifelse(is.na(punts_relevant$wind), 0, punts_relevant$wind)
+
+str(punts_relevant)
+summary(punts_relevant)
+```
+
+### Linear Regression
+```{r}
+model1 <- lm(formula=end_spot ~ .-game_seconds_remaining -game_half -home_timeouts_remaining, data=punts_relevant)
+summary(model1)
+```
+
+### TODO: Split into train/test and measure accuracy
+
+TODO
+
