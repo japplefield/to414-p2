@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
-install.packages(gdata)
+#install.packages(gdata)
 
 library(nflfastR)
 
