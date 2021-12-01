@@ -1,0 +1,241 @@
+---
+title: "Stacked Model (GFI)"
+author: "Mark Cappaert"
+date: "12/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "Fourth Down Conversion"
+author: "Mark Cappaert"
+date: "11/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Install packages and Load Data
+
+```{r}
+#install.packages("devtools")
+#install.packages("nflfastR")
+#install.packages("gsisdecoder")
+#install.packages(gdata)
+
+library(nflfastR)
+
+future::plan("multisession")
+pbp <- load_pbp(2010:2020, file_type = "qs")
+str(pbp)
+
+#library(gdata)
+#pbp$year <- left(pbp$game_date, n=4)
+```
+
+## Set up "Going For It" (GFI) Data
+```{r}
+#Only pull plays that are a fourth down attempt
+GFI <- pbp[!is.na(pbp$play_type), ]
+GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$field_goal_attempt == 0 & GFI$play_type != "no_play" & GFI$play_type != "qb_kneel",]
+```
+
+
+
+## Set up GFI data for all models
+```{r}
+# Using model.matrix to convert all the factors to dummy variables
+# We are converting all of the factors into dummy variables as the input into knn has to be numeric
+library(dplyr)
+
+#Include all variables for step function, exclude NA rows
+GFI_ALL <- GFI[is.na(GFI$fourth_down_converted) == FALSE,]
+
+## Randomize the rows in the data (shuffling the rows)
+set.seed(123)
+GFI_ALL <- slice(GFI_ALL, sample(1:n()))
+
+#Include only variables we want to use in prediction
+GFI_small <- select(GFI_ALL, fourth_down_converted, posteam_type, yardline_100, half_seconds_remaining, game_half, ydstogo, posteam_score, defteam_score, season_type)
+
+
+#Model Matrix for ANN
+GFI_mm <- as.data.frame(model.matrix(~.-1,GFI_small))
+
+
+#Normalize the data
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# we are going to normalize everything 
+#Create Labels for KNN 
+GFI_norm <- as.data.frame(lapply(GFI_mm[-1], normalize))
+GFI_labels <- GFI_mm[,1]
+```
+
+
+## GLM
+
+### Training
+```{r}
+library(stats)
+model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial")
+summary(model_glm)
+```
+
+### Predicting
+```{r}
+predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
+predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
+predict_glm_factor <- as.factor(predict_glm_factor)
+library(caret)
+confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
+```
+
+## Run GLM Model with step
+```{r}
+library(stats)
+glm_mod2 <- glm(fourth_down_converted ~., data = GFI_ALL, family = "binomial")
+glm_mod2 <- step(glm_mod2, direction="backward")
+summary(model_glm2)
+```
+
+## ANN
+
+### Training
+```{r, cache=TRUE}
+library(neuralnet)
+model_ann <- neuralnet(formula = fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
+#plot(model_ann)
+```
+
+### Predicting
+```{r}
+library(neuralnet)
+predict_ann <- compute(model_ann, GFI_mm)
+predict_ann <- predict_ann$net.result
+predict_ann_factor <- ifelse(predict_ann < 0.5, 0, 1)
+predict_ann_factor <- as.factor(predict_ann_factor)
+
+confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
+```
+
+
+## KNN
+
+### Training & Predicting
+```{r}
+library(class)
+
+knn_pred <- knn(train = GFI_norm, test = GFI_norm,
+                      cl = GFI_labels, k=76)
+
+confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
+```
+
+
+## SVM
+
+### Training
+```{r}
+library(kernlab)
+model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar=list(sigma=1))
+```
+
+### Predicting
+```{r}
+predict_svm <- predict(model_svm, GFI_small)
+predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
+
+confusionMatrix(as.factor(predict_svm), as.factor(GFI_labels))
+```
+
+## Decision Tree
+
+### Training
+```{r}
+library(C50)
+
+model_tree <- C5.0(as.factor(fourth_down_converted) ~ ., data=GFI_small)
+summary(model_tree)
+```
+
+### Predicting
+```{r}
+predict_tree <- predict(model_tree, GFI_small)
+
+confusionMatrix(predict_tree, as.factor(GFI_labels))
+```
+
+
+## Summary Kappas
+Kappa for each model is as follows:
+- Logistic Regression: 0.2455
+- KNN: 0.2321
+- ANN: 0.1595
+- SVM: 0.4564  
+- Decision Tree: 0.2498 
+
+# Stacked Model
+
+## Data Frame of all Predictions
+```{r}
+predictions <- as.data.frame(GFI_labels)
+predictions$glm <- predict_glm
+predictions$knn <- knn_pred
+predictions$ann <- predict_ann
+predictions$svm <- predict_svm
+predictions$tree <- predict_tree
+
+str(predictions)
+summary(predictions)
+```
+
+## Split into Train and Validation Sets
+
+```{r}
+set.seed(123)
+train_set <- sample(1:nrow(predictions), 0.7*nrow(predictions))
+
+#Training set 
+train_data <- predictions[train_set,]
+str(train_data)
+
+val_data <- predictions[-train_set,]
+str(val_data)
+```
+
+
+## Decision Tree
+
+```{r}
+library(C50)
+
+set.seed(123)
+
+second_level_tree <- C5.0(as.factor(GFI_labels) ~ ., data=train_data)
+summary(second_level_tree)
+```
+
+## Validate Decision Tree
+
+```{r}
+predict_second_level <- predict(second_level_tree, val_data)
+
+plot(second_level_tree)
+
+library(caret)
+confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
+```
+
+# Preliminary Conclusions
+
+## Fourth Down Conversion Success
+
+Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
