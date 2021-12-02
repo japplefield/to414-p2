@@ -86,6 +86,7 @@ GFI_labels <- GFI_mm[,1]
 ```{r}
 library(stats)
 model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial")
+model_glm <- step(model_glm, direction="backward")
 summary(model_glm)
 ```
 
