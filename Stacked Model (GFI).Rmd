@@ -88,7 +88,44 @@ library(stats)
 model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial")
 model_glm <- step(model_glm, direction="backward")
 summary(model_glm)
+
+GFI_GLM_ALL <- GFI_ALL
+GFI_GLM_ALL <- GFI_GLM_ALL %>% select_if(~ !any(is.na(.)))
+
+GFI_GLM_ALL$game_id <- NULL
+GFI_GLM_ALL$play_id <- NULL
+GFI_GLM_ALL$old_game_id <- NULL
+GFI_GLM_ALL$game_date <- NULL
+GFI_GLM_ALL$desc <- NULL
+GFI_GLM_ALL$yrdln <- NULL
+GFI_GLM_ALL$nfl_api_id <- NULL
+GFI_GLM_ALL$fixed_drive_result <- NULL
+
+GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
+
+GFI_GLM_ALL$home_team <- NULL
+GFI_GLM_ALL$away_team <- NULL
+GFI_GLM_ALL$posteam <- NULL
+GFI_GLM_ALL$defteam <- NULL
+GFI_GLM_ALL$side_of_field <- NULL
+GFI_GLM_ALL$time <- NULL
+GFI_GLM_ALL$series_result <- NULL
+GFI_GLM_ALL$start_time <- NULL
+GFI_GLM_ALL$home_coach <- NULL
+GFI_GLM_ALL$away_coach <- NULL
+GFI_GLM_ALL$stadium_id <- NULL
+GFI_GLM_ALL$game_stadium <- NULL
+
+GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~n_distinct(.) > 1))
+
+
+library(stats)
+model_glm <- glm(fourth_down_converted ~ ., data = GFI_GLM_ALL, family = "binomial", maxit = 100)
+model_glm <- step(model_glm, direction="backward")
+summary(model_glm)
 ```
+
+
 
 ### Predicting
 ```{r}
