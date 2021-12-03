@@ -239,7 +239,7 @@ confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
 library(class)
 
 knn_pred <- knn(train = GFI_norm, test = GFI_norm,
-                      cl = GFI_labels, k=76)
+                      cl = GFI_labels, k=5)
 
 confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
 ```
@@ -250,7 +250,7 @@ confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
 ### Training
 ```{r}
 library(kernlab)
-model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar=list(sigma=1))
+model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar=list(sigma=0.2))
 ```
 
 ### Predicting
@@ -283,9 +283,9 @@ confusionMatrix(predict_tree, as.factor(GFI_labels))
 Kappa for each model is as follows:
 
 - Logistic Regression: 0.5533
-- KNN: 0.2667
+- KNN: 0.5048
 - ANN: 0.6133
-- SVM: 0.9941  
+- SVM: 0.8472  
 - Decision Tree: 0.6376 
 
 # Stacked Model
@@ -344,4 +344,4 @@ confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
 
 ## Fourth Down Conversion Success
 
-Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our SVM model is our most accurate however it may be overfitting.
+Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our SVM model is our most accurate however it may be overfitting. We artificially reduced the sigma to prevent it from overfitting, but this of course reduces the accuracy of the entire stacked model
