@@ -202,7 +202,7 @@ model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial
 summary(model_glm)
 ```
 
-### Testing
+### Predicting
 ```{r}
 predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
 predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
@@ -340,8 +340,67 @@ library(caret)
 confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
 ```
 
-# Preliminary Conclusions
+# Decision Predictions
 
-## Fourth Down Conversion Success
+(Jim Harbaugh please read this part)
 
-Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our SVM model is our most accurate however it may be overfitting. We artificially reduced the sigma to prevent it from overfitting, but this of course reduces the accuracy of the entire stacked model
+We will now create a function that uses the trained model to determine if a team should "Go For It" on 4th Down.
+
+
+## Stacked Logistic Model
+First, we want a stacked model that outputs a probability, and not a binary response. We will use a logistic stacked model instead of a decision tree. KNN will not be used because it is hard to form a lightweight function.
+
+### Training
+```{r, cache=TRUE}
+stacked_glm <- glm(GFI_labels ~ .-knn, data=train_data)
+summary(stacked_glm)
+```
+
+## Decision Function
+
+Now we will define the actual decision function. The function requires as input a data frame with the following fields:
+
+yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, home_timeouts_remaining, timeout, total_home_score, total_away_score, posteam_score, defteam_score, td_prob, total_home_epa, total_home_rush_epa, comp_yac_epa, wp, home_wp, special_teams_play, away_score, home_score, home_opening_kickoff, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
+
+It requires a data frame called models that contains the following fields:
+
+ann_model, svm_model, glm_model, tree_model, stacked_glm
+
+
+```{r}
+
+gfi <- function(df, models, oppteam){
+
+  model_outs <- data.frame(
+    "glm" = predict(models$glm_model, newdata=df),
+    "ann" = compute(models$ann_model, df)$net.result,
+    "svm" = predict(models$svm_model, df),
+    "tree" = predict(models$tree, df)
+  )
+
+  library(neuralnet)
+  prob_success <- predict(models$stacked_glm, model_outs)
+
+  pos_df <- df
+  pos_df$down <- 1
+  pos_df$ydstogo <- 10
+  pos_df$yardline_100 <- pos_df$yardline_100 - pos_df$ydstogo
+
+  success <- nflfastR::calculate_expected_points(pos_df) %>%
+    dplyr::select(ep)
+
+  opp_df <- df
+  opp_df$posteam <- oppteam
+  opp_df$down <- 1
+  opp_df$ydstogo <- 10
+  opp_df$yardline_100 <- 100 - pos_df$yardline_100
+
+  failure <- nflfastR::calculate_expected_points(opp_df) %>%
+    dplyr::select(ep)
+
+  return (ifelse((prob_success * success$ep + (1-prob_success) * failure$ep * -1) > 0, "Go For It", "Don't Go For It"))
+
+}
+```
+
+Now that the function has been defined...

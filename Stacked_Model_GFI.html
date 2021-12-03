@@ -1966,8 +1966,8 @@ model_glm &lt;- glm(fourth_down_converted ~ ., data = GFI_small, family = &quot;
 ## 
 ## Number of Fisher Scoring iterations: 8</code></pre>
 </div>
-<div id="testing" class="section level3">
-<h3>Testing</h3>
+<div id="predicting-1" class="section level3">
+<h3>Predicting</h3>
 <pre class="r"><code>predict_glm &lt;- predict(model_glm, newdata = GFI_small, type = &quot;response&quot;)
 predict_glm_factor &lt;- ifelse(predict_glm &lt; 0.5, 0, 1)
 predict_glm_factor &lt;- as.factor(predict_glm_factor)
@@ -2010,7 +2010,7 @@ confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))<
 model_ann &lt;- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax=1000000, hidden=3)
 plot(model_ann)</code></pre>
 </div>
-<div id="predicting-1" class="section level3">
+<div id="predicting-2" class="section level3">
 <h3>Predicting</h3>
 <pre class="r"><code>library(neuralnet)</code></pre>
 <pre><code>## 
@@ -2104,7 +2104,7 @@ confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))</code></pre>
 ##     alpha</code></pre>
 <pre class="r"><code>model_svm &lt;- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = &quot;rbfdot&quot;, kpar=list(sigma=0.2))</code></pre>
 </div>
-<div id="predicting-2" class="section level3">
+<div id="predicting-3" class="section level3">
 <h3>Predicting</h3>
 <pre class="r"><code>predict_svm &lt;- predict(model_svm, GFI_small)
 predict_svm &lt;- ifelse(predict_svm &lt; 0.5, 0, 1)
@@ -2152,7 +2152,7 @@ summary(model_tree)</code></pre>
 ## C5.0.formula(formula = as.factor(fourth_down_converted) ~ ., data = GFI_small)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Thu Dec  2 23:37:28 2021
+## C5.0 [Release 2.07 GPL Edition]      Fri Dec  3 00:40:17 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2382,7 +2382,7 @@ summary(model_tree)</code></pre>
 ## 
 ## Time: 0.1 secs</code></pre>
 </div>
-<div id="predicting-3" class="section level3">
+<div id="predicting-4" class="section level3">
 <h3>Predicting</h3>
 <pre class="r"><code>predict_tree &lt;- predict(model_tree, GFI_small)
 
@@ -2511,7 +2511,7 @@ summary(second_level_tree)</code></pre>
 ## C5.0.formula(formula = as.factor(GFI_labels) ~ ., data = train_data)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Thu Dec  2 23:37:29 2021
+## C5.0 [Release 2.07 GPL Edition]      Fri Dec  3 00:40:18 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2603,11 +2603,83 @@ confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))</code></pr
 ## </code></pre>
 </div>
 </div>
-<div id="preliminary-conclusions" class="section level1">
-<h1>Preliminary Conclusions</h1>
-<div id="fourth-down-conversion-success" class="section level2">
-<h2>Fourth Down Conversion Success</h2>
-<p>Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our SVM model is our most accurate however it may be overfitting. We artificially reduced the sigma to prevent it from overfitting, but this of course reduces the accuracy of the entire stacked model</p>
+<div id="decision-predictions" class="section level1">
+<h1>Decision Predictions</h1>
+<p>(Jim Harbaugh please read this part)</p>
+<p>We will now create a function that uses the trained model to determine if a team should “Go For It” on 4th Down.</p>
+<div id="stacked-logistic-model" class="section level2">
+<h2>Stacked Logistic Model</h2>
+<p>First, we want a stacked model that outputs a probability, and not a binary response. We will use a logistic stacked model instead of a decision tree. KNN will not be used because it is hard to form a lightweight function.</p>
+<div id="training-5" class="section level3">
+<h3>Training</h3>
+<pre class="r"><code>stacked_glm &lt;- glm(GFI_labels ~ .-knn, data=train_data)
+summary(stacked_glm)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = GFI_labels ~ . - knn, data = train_data)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -0.97894  -0.05179   0.01803   0.05217   0.95589  
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.035242   0.008034   4.387 1.18e-05 ***
+## glm         -0.029700   0.026311  -1.129    0.259    
+## ann          0.130604   0.026824   4.869 1.17e-06 ***
+## svm          0.755714   0.012063  62.649  &lt; 2e-16 ***
+## tree1        0.078755   0.012504   6.299 3.33e-10 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 0.06520693)
+## 
+##     Null deviance: 1009.94  on 4039  degrees of freedom
+## Residual deviance:  263.11  on 4035  degrees of freedom
+## AIC: 442.05
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+</div>
+</div>
+<div id="decision-function" class="section level2">
+<h2>Decision Function</h2>
+<p>Now we will define the actual decision function. The function requires as input a data frame with the following fields:</p>
+<p>yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, home_timeouts_remaining, timeout, total_home_score, total_away_score, posteam_score, defteam_score, td_prob, total_home_epa, total_home_rush_epa, comp_yac_epa, wp, home_wp, special_teams_play, away_score, home_score, home_opening_kickoff, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining</p>
+<p>It requires a data frame called models that contains the following fields:</p>
+<p>ann_model, svm_model, glm_model, tree_model, stacked_glm</p>
+<pre class="r"><code>gfi &lt;- function(df, models, oppteam){
+
+  model_outs &lt;- data.frame(
+    &quot;glm&quot; = predict(models$glm_model, newdata=df),
+    &quot;ann&quot; = compute(models$ann_model, df)$net.result,
+    &quot;svm&quot; = predict(models$svm_model, df),
+    &quot;tree&quot; = predict(models$tree, df)
+  )
+
+  library(neuralnet)
+  prob_success &lt;- predict(models$stacked_glm, model_outs)
+
+  pos_df &lt;- df
+  pos_df$down &lt;- 1
+  pos_df$ydstogo &lt;- 10
+  pos_df$yardline_100 &lt;- pos_df$yardline_100 - pos_df$ydstogo
+
+  success &lt;- nflfastR::calculate_expected_points(pos_df) %&gt;%
+    dplyr::select(ep)
+
+  opp_df &lt;- df
+  opp_df$posteam &lt;- oppteam
+  opp_df$down &lt;- 1
+  opp_df$ydstogo &lt;- 10
+  opp_df$yardline_100 &lt;- 100 - pos_df$yardline_100
+
+  failure &lt;- nflfastR::calculate_expected_points(opp_df) %&gt;%
+    dplyr::select(ep)
+
+  return (ifelse((prob_success * success$ep + (1-prob_success) * failure$ep * -1) &gt; 0, &quot;Go For It&quot;, &quot;Don&#39;t Go For It&quot;))
+
+}</code></pre>
+<p>Now that the function has been defined…</p>
 </div>
 </div>
 
