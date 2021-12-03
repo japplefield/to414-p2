@@ -90,39 +90,88 @@ model_glm <- step(model_glm, direction="backward")
 summary(model_glm)
 
 GFI_GLM_ALL <- GFI_ALL
-GFI_GLM_ALL <- GFI_GLM_ALL %>% select_if(~ !any(is.na(.)))
-
-GFI_GLM_ALL$game_id <- NULL
-GFI_GLM_ALL$play_id <- NULL
-GFI_GLM_ALL$old_game_id <- NULL
-GFI_GLM_ALL$game_date <- NULL
-GFI_GLM_ALL$desc <- NULL
-GFI_GLM_ALL$yrdln <- NULL
-GFI_GLM_ALL$nfl_api_id <- NULL
-GFI_GLM_ALL$fixed_drive_result <- NULL
-
 GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
 
-GFI_GLM_ALL$home_team <- NULL
-GFI_GLM_ALL$away_team <- NULL
-GFI_GLM_ALL$posteam <- NULL
-GFI_GLM_ALL$defteam <- NULL
-GFI_GLM_ALL$side_of_field <- NULL
-GFI_GLM_ALL$time <- NULL
-GFI_GLM_ALL$series_result <- NULL
-GFI_GLM_ALL$start_time <- NULL
-GFI_GLM_ALL$home_coach <- NULL
-GFI_GLM_ALL$away_coach <- NULL
-GFI_GLM_ALL$stadium_id <- NULL
-GFI_GLM_ALL$game_stadium <- NULL
+GFI_GLM_ALL <- select(GFI_GLM_ALL, 
+  season_type, 
+  week, 
+  posteam_type, 
+  yardline_100, 
+  quarter_seconds_remaining, 
+  half_seconds_remaining, 
+  game_seconds_remaining, 
+  game_half, 
+  qtr, 
+  goal_to_go, 
+  ydstogo, 
+  play_type, 
+  shotgun, 
+  no_huddle, 
+  home_timeouts_remaining, 
+  away_timeouts_remaining, 
+  timeout, 
+  posteam_timeouts_remaining, 
+  defteam_timeouts_remaining, 
+  total_home_score, 
+  total_away_score, 
+  posteam_score, 
+  defteam_score, 
+  score_differential, 
+  opp_safety_prob, 
+  opp_td_prob, 
+  safety_prob, 
+  td_prob, 
+  ep, 
+  total_home_epa, 
+  total_away_epa, 
+  total_home_rush_epa, 
+  total_home_pass_epa, 
+  total_away_rush_epa, 
+  total_away_pass_epa, 
+  comp_yac_epa, 
+  total_home_comp_air_epa, 
+  total_away_comp_air_epa, 
+  total_home_comp_yac_epa, 
+  total_away_comp_yac_epa, 
+  total_home_raw_air_epa, 
+  total_away_raw_air_epa, 
+  total_home_raw_yac_epa, 
+  total_away_raw_yac_epa, 
+  wp, 
+  def_wp, 
+  home_wp, 
+  away_wp, 
+  special_teams_play, 
+  fixed_drive, 
+  away_score, 
+  home_score, 
+  location, 
+  div_game, 
+  roof, 
+  surface, 
+  home_opening_kickoff,
+  fourth_down_converted
+)
 
 GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~n_distinct(.) > 1))
 
+train_set <- sample(1:nrow(GFI_GLM_ALL), 0.7*nrow(GFI_GLM_ALL))
+
+#Training set 
+gfi_glm_train <- GFI_GLM_ALL[train_set,]
+gfi_glm_validation <- GFI_GLM_ALL[-train_set,]
 
 library(stats)
-model_glm <- glm(fourth_down_converted ~ ., data = GFI_GLM_ALL, family = "binomial", maxit = 100)
+model_glm <- glm(fourth_down_converted ~ ., data = gfi_glm_train, family = "binomial", control=list(maxit = 100))
 model_glm <- step(model_glm, direction="backward")
 summary(model_glm)
+
+glm_pred <- predict(model_glm, newdata = gfi_glm_validation)
+glm_pred <- ifelse(glm_pred < 0, 0, 1)
+glm_pred <- as.factor(glm_pred)
+
+library(caret)
+confusionMatrix(glm_pred, as.factor(gfi_glm_validation$fourth_down_converted))
 ```
 
 
