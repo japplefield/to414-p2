@@ -9,20 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
----
-title: "Fourth Down Conversion"
-author: "Mark Cappaert"
-date: "11/4/2021"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Install packages and Load Data
 
-```{r}
+```{r, cache=TRUE}
 #install.packages("devtools")
 #install.packages("nflfastR")
 #install.packages("gsisdecoder")
@@ -54,45 +43,20 @@ GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$fie
 library(dplyr)
 
 #Include all variables for step function, exclude NA rows
-GFI_ALL <- GFI[is.na(GFI$fourth_down_converted) == FALSE,]
+GFI_ALL <- GFI[!is.na(GFI$fourth_down_converted),]
 
 ## Randomize the rows in the data (shuffling the rows)
 set.seed(123)
 GFI_ALL <- slice(GFI_ALL, sample(1:n()))
-
-#Include only variables we want to use in prediction
-GFI_small <- select(GFI_ALL, fourth_down_converted, posteam_type, yardline_100, half_seconds_remaining, game_half, ydstogo, posteam_score, defteam_score, season_type)
-
-
-#Model Matrix for ANN
-GFI_mm <- as.data.frame(model.matrix(~.-1,GFI_small))
-
-
-#Normalize the data
-normalize <- function(x) {
-  return ((x - min(x)) / (max(x) - min(x)))
-}
-
-# we are going to normalize everything 
-#Create Labels for KNN 
-GFI_norm <- as.data.frame(lapply(GFI_mm[-1], normalize))
-GFI_labels <- GFI_mm[,1]
 ```
 
 
-## GLM
+## Variable Selection with GLM
 
 ### Training
-```{r}
-library(stats)
-model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial")
-model_glm <- step(model_glm, direction="backward")
-summary(model_glm)
-
-GFI_GLM_ALL <- GFI_ALL
-GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
-
-GFI_GLM_ALL <- select(GFI_GLM_ALL, 
+```{r, cache=TRUE}
+GFI_GLM_ALL <- select(GFI_ALL, 
+  fourth_down_converted,
   season_type, 
   week, 
   posteam_type, 
@@ -149,9 +113,9 @@ GFI_GLM_ALL <- select(GFI_GLM_ALL,
   div_game, 
   roof, 
   surface, 
-  home_opening_kickoff,
-  fourth_down_converted
+  home_opening_kickoff
 )
+GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
 
 GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~n_distinct(.) > 1))
 
@@ -165,18 +129,80 @@ library(stats)
 model_glm <- glm(fourth_down_converted ~ ., data = gfi_glm_train, family = "binomial", control=list(maxit = 100))
 model_glm <- step(model_glm, direction="backward")
 summary(model_glm)
-
-glm_pred <- predict(model_glm, newdata = gfi_glm_validation)
-glm_pred <- ifelse(glm_pred < 0, 0, 1)
-glm_pred <- as.factor(glm_pred)
-
-library(caret)
-confusionMatrix(glm_pred, as.factor(gfi_glm_validation$fourth_down_converted))
 ```
 
-
-
 ### Predicting
+```{r}
+predict_glm <- predict(model_glm, newdata = gfi_glm_validation, type = "response")
+predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
+predict_glm_factor <- as.factor(predict_glm_factor)
+library(caret)
+confusionMatrix(predict_glm_factor, as.factor(gfi_glm_validation$fourth_down_converted))
+```
+
+Now we will run future models on just inputs the stepwise GLM found significant.
+
+```{r}
+#Include only variables we want to use in prediction
+GFI_small <- select(GFI_ALL, 
+  fourth_down_converted,
+  yardline_100,
+  half_seconds_remaining,
+  game_half,
+  goal_to_go,
+  ydstogo,
+  play_type,
+  shotgun,
+  home_timeouts_remaining,
+  timeout,
+  total_home_score,
+  total_away_score,
+  posteam_score,
+  defteam_score,
+  td_prob,
+  total_home_epa,
+  total_home_rush_epa,
+  comp_yac_epa,
+  wp,
+  home_wp,
+  special_teams_play,
+  away_score,
+  home_score,
+  home_opening_kickoff
+)
+
+GFI_small <- GFI_small %>% mutate_if(is.character, as.factor)
+
+GFI_small <- GFI_small %>% select(where(~n_distinct(.) > 1))
+
+library(janitor)
+GFI_small <- clean_names(GFI_small)
+
+#Model Matrix for ANN
+GFI_mm <- as.data.frame(model.matrix(~.-1,GFI_small))
+
+
+#Normalize the data
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# we are going to normalize everything 
+#Create Labels for KNN 
+GFI_norm <- as.data.frame(lapply(GFI_mm[-1], normalize))
+GFI_labels <- GFI_mm[,1]
+```
+
+## GLM
+
+### Training
+```{r}
+library(stats)
+model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial", control=list(maxit = 100))
+summary(model_glm)
+```
+
+### Testing
 ```{r}
 predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
 predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
@@ -185,21 +211,13 @@ library(caret)
 confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
 ```
 
-## Run GLM Model with step
-```{r}
-library(stats)
-glm_mod2 <- glm(fourth_down_converted ~., data = GFI_ALL, family = "binomial")
-glm_mod2 <- step(glm_mod2, direction="backward")
-summary(model_glm2)
-```
-
 ## ANN
 
 ### Training
 ```{r, cache=TRUE}
 library(neuralnet)
-model_ann <- neuralnet(formula = fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
-#plot(model_ann)
+model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax=1000000, hidden=3)
+plot(model_ann)
 ```
 
 ### Predicting
@@ -263,11 +281,12 @@ confusionMatrix(predict_tree, as.factor(GFI_labels))
 
 ## Summary Kappas
 Kappa for each model is as follows:
-- Logistic Regression: 0.2455
-- KNN: 0.2321
-- ANN: 0.1595
-- SVM: 0.4564  
-- Decision Tree: 0.2498 
+
+- Logistic Regression: 0.5533
+- KNN: 0.2667
+- ANN: 0.6133
+- SVM: 0.9941  
+- Decision Tree: 0.6376 
 
 # Stacked Model
 
@@ -325,4 +344,4 @@ confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
 
 ## Fourth Down Conversion Success
 
-Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
+Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our SVM model is our most accurate however it may be overfitting.
