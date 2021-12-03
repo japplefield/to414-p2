@@ -1,8 +1,14 @@
 ---
 title: "Stacked Model (GFI)"
-author: "Mark Cappaert"
-date: "12/1/2021"
-output: html_document
+author: "Hip Hip Array"
+date: "12/03/2021"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+    toc: true
+    toc_depth: 3
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
