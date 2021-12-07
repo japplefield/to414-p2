@@ -379,7 +379,7 @@ gfi <- function(df, models, oppteam){
 Now that the function has been defined...
 
 ```{r}
-input_1 = (
+input_1 <- data.frame(
   "fourth_down_converted" = ,
   "yardline_100" = ,
   "half_seconds_remaining" = ,
