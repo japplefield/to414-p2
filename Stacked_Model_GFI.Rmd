@@ -82,8 +82,6 @@ GFI_GLM_ALL <- select(GFI_ALL,
   timeout, 
   posteam_timeouts_remaining, 
   defteam_timeouts_remaining, 
-  total_home_score, 
-  total_away_score, 
   posteam_score, 
   defteam_score, 
   score_differential, 
@@ -134,12 +132,10 @@ GFI_small <- select(GFI_ALL,
   goal_to_go,
   ydstogo,
   play_type,
+  shotgun,
   timeout,
-  total_home_score,
-  total_away_score,
   posteam_score,
   defteam_score,
-  special_teams_play,
   away_score,
   home_score
 )
@@ -207,18 +203,80 @@ confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
 
 ## KNN
 
+### Tuning the hyperparameter k
+```{r}
+library(class)
+
+best_kappa <- 0
+best_k <- 0
+
+train_set <- sample(1:nrow(GFI_norm), 0.7*nrow(GFI_norm))
+
+#Training set 
+gfi_knn_train <- GFI_norm[train_set,]
+gfi_knn_validation <- GFI_norm[-train_set,]
+
+gfi_knn_train_labels <- GFI_labels[train_set]
+gfi_knn_validation_labels <- GFI_labels[-train_set]
+
+for (i in 1:100){
+  knn_pred <- knn(train = gfi_knn_train, test = gfi_knn_validation,
+                        cl = gfi_knn_train_labels, k=i)
+
+  kappa <- confusionMatrix(as.factor(knn_pred), as.factor(gfi_knn_validation_labels))$overall['Kappa']
+
+  print(i)
+  print(kappa)
+  if (kappa > best_kappa){
+    best_k = i
+    best_kappa = kappa
+  }
+}
+```
+
 ### Training & Predicting
 ```{r}
 library(class)
 
 knn_pred <- knn(train = GFI_norm, test = GFI_norm,
-                      cl = GFI_labels, k=5)
+                      cl = GFI_labels, k=best_k)
 
 confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
 ```
 
-
 ## SVM
+
+### Tuning the hyperparemeter sigma
+
+```{r}
+library(kernlab)
+library(class)
+
+best_kappa <- 0
+best_sigma <- 0
+
+train_set <- sample(1:nrow(GFI_small), 0.7*nrow(GFI_small))
+
+#Training set 
+gfi_svm_train <- GFI_small[train_set,]
+gfi_svm_validation <- GFI_small[-train_set,]
+
+for (i in c(2:10 %o% 10^(-5:2))){
+  model_svm <- ksvm(fourth_down_converted ~ ., data = gfi_svm_train, kernel = "rbfdot", kpar=list(sigma=i))
+  predict_svm <- predict(model_svm, gfi_svm_validation)
+  predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
+
+  kappa <- confusionMatrix(as.factor(predict_svm), as.factor(gfi_svm_validation$fourth_down_converted))$overall['Kappa']
+
+  print(i)
+  print(kappa)
+  if (kappa > best_kappa){
+    best_sigma = i
+    best_kappa = kappa
+  }
+}
+
+```
 
 ### Training
 ```{r}
