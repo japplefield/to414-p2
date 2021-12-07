@@ -403,7 +403,7 @@ summary(stacked_glm)
 
 Now we will define the actual decision function. The function requires as input a data frame with the following fields:
 
-fourth_down_converted, yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, timeout, total_home_score, total_away_score, posteam_score, defteam_score, special_teams_play, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
+yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, timeout, posteam_score, defteam_score, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
 
 It requires a data frame called models that contains the following fields:
 
@@ -445,30 +445,3 @@ gfi <- function(df, models, oppteam) {
 ```
 
 Now that the function has been defined...
-
-```{r}
-input_1 <- data.frame(
-  "fourth_down_converted" = 0,
-  "yardline_100" = 10,
-  "half_seconds_remaining" = 120,
-  "game_half" = 1,
-  "goal_to_go" = 0,
-  "ydstogo" = 5,
-  "play_type" = 1,
-  "timeout" = 0,
-  "total_home_score" = 21,
-  "total_away_score" = 3,
-  "posteam_score" = 21,
-  "defteam_score" = 3,
-  "special_teams_play" = 0,
-  "away_score" = 3,
-  "home_score" = 21,
-  "season" = 2018,
-  "home_team" = "DET",
-  "posteam" = "DET",
-  "roof" = "outdoor",
-  "down" = 3,
-  "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2
-)
-```

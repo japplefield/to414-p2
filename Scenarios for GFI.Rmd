@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 #Base input 
 input_1 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -39,7 +38,6 @@ input_1 <- data.frame(
 #Changing yardline_100 to 50 
 
 input_2 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 50,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -66,7 +64,6 @@ input_2 <- data.frame(
 #Yardline_100 to 80
 
 input_3 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 80,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -93,7 +90,6 @@ input_3 <- data.frame(
 #Total home score to 14 (now teams are tied with 14)
 
 input_4 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -121,7 +117,6 @@ input_4 <- data.frame(
 #Total home score to 14 (now teams are tied with 14) but further from endzone
 
 input_5 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 50,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -148,7 +143,6 @@ input_5 <- data.frame(
 #Total away score to 27 (away team beating home team by 7)
 
 input_6 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -175,7 +169,6 @@ input_6 <- data.frame(
 ```{r}
 #Team with possession has 1 timeout, defeding team has 2
 input_7 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -201,7 +194,6 @@ input_7 <- data.frame(
 ```{r}
 #Team with possession has 3 timeouts, defending team has 2
 input_8 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -227,7 +219,6 @@ input_8 <- data.frame(
 ```{r}
 #Team with possession has 0 timeouts, defending team has 2
 input_9 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -253,7 +244,6 @@ input_9 <- data.frame(
 ```{r}
 #Team with possession has 2 timeouts, defending team has 1
 input_10 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -279,7 +269,6 @@ input_10 <- data.frame(
 ```{r}
 #Team with possession has 2 timeouts, defending team has 3
 input_11 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -306,7 +295,6 @@ input_11 <- data.frame(
 #Team with possession has 2 timeouts, defending team has 0
 
 input_12 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -332,7 +320,6 @@ input_12 <- data.frame(
 ```{r}
 #Yards to go changed to 2
 input_13 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -358,7 +345,6 @@ input_13 <- data.frame(
 ```{r}
 #Yards to go changed to 7
 input_14 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -384,7 +370,6 @@ input_14 <- data.frame(
 ```{r}
 #half second remaining 600 in first half
 input_15 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 1,
@@ -410,7 +395,6 @@ input_15 <- data.frame(
 ```{r}
 #half second remaining 600 in second half
 input_16 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 2,
@@ -436,7 +420,6 @@ input_16 <- data.frame(
 ```{r}
 #half second remaining 120 in the first half
 input_17 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -462,7 +445,6 @@ input_17 <- data.frame(
 ```{r}
 #Base input but with timeout = 1 (called a timeout)
 input_18 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -489,7 +471,6 @@ input_18 <- data.frame(
 ```{r}
 #half second remaining 600 in first half and home team losing
 input_19 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 1,
@@ -515,7 +496,6 @@ input_19 <- data.frame(
 ```{r}
 #half second remaining 600 in second half and home team losing 
 input_20 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 2,
@@ -541,7 +521,6 @@ input_20 <- data.frame(
 ```{r}
 #half second remaining 120 in the first half and home team losing 
 input_21 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
@@ -568,7 +547,6 @@ input_21 <- data.frame(
 ```{r}
 #half second remaining 600 in first half
 input_22 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 1,
@@ -594,7 +572,6 @@ input_22 <- data.frame(
 ```{r}
 #half second remaining 600 in second half
 input_23 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
   "game_half" = 2,
@@ -620,7 +597,6 @@ input_23 <- data.frame(
 ```{r}
 #half second remaining 120 in the first half
 input_24 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
   "game_half" = 1,
