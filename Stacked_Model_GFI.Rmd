@@ -18,10 +18,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Install packages and Load Data
 
 ```{r, cache=TRUE}
-#install.packages("devtools")
-#install.packages("nflfastR")
-#install.packages("gsisdecoder")
-#install.packages(gdata)
+# install.packages("devtools")
+# install.packages("nflfastR")
+# install.packages("gsisdecoder")
+# install.packages(gdata)
 
 library(nflfastR)
 
@@ -29,15 +29,15 @@ future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
 str(pbp)
 
-#library(gdata)
-#pbp$year <- left(pbp$game_date, n=4)
+# library(gdata)
+# pbp$year <- left(pbp$game_date, n=4)
 ```
 
 ## Set up "Going For It" (GFI) Data
 ```{r}
-#Only pull plays that are a fourth down attempt
+# Only pull plays that are a fourth down attempt
 GFI <- pbp[!is.na(pbp$play_type), ]
-GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$field_goal_attempt == 0 & GFI$play_type != "no_play" & GFI$play_type != "qb_kneel",]
+GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$field_goal_attempt == 0 & GFI$play_type != "no_play" & GFI$play_type != "qb_kneel", ]
 ```
 
 
@@ -48,8 +48,8 @@ GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$fie
 # We are converting all of the factors into dummy variables as the input into knn has to be numeric
 library(dplyr)
 
-#Include all variables for step function, exclude NA rows
-GFI_ALL <- GFI[!is.na(GFI$fourth_down_converted),]
+# Include all variables for step function, exclude NA rows
+GFI_ALL <- GFI[!is.na(GFI$fourth_down_converted), ]
 
 ## Randomize the rows in the data (shuffling the rows)
 set.seed(123)
@@ -61,55 +61,56 @@ GFI_ALL <- slice(GFI_ALL, sample(1:n()))
 
 ### Training
 ```{r, cache=TRUE}
-GFI_GLM_ALL <- select(GFI_ALL, 
+GFI_GLM_ALL <- select(
+  GFI_ALL,
   fourth_down_converted,
-  season_type, 
-  week, 
-  posteam_type, 
-  yardline_100, 
-  quarter_seconds_remaining, 
-  half_seconds_remaining, 
-  game_seconds_remaining, 
-  game_half, 
-  qtr, 
-  goal_to_go, 
-  ydstogo, 
-  play_type, 
-  shotgun, 
-  no_huddle, 
-  home_timeouts_remaining, 
-  away_timeouts_remaining, 
-  timeout, 
-  posteam_timeouts_remaining, 
-  defteam_timeouts_remaining, 
-  total_home_score, 
-  total_away_score, 
-  posteam_score, 
-  defteam_score, 
-  score_differential, 
-  special_teams_play, 
-  fixed_drive, 
-  away_score, 
-  home_score, 
-  location, 
-  div_game, 
-  roof, 
-  surface, 
+  season_type,
+  week,
+  posteam_type,
+  yardline_100,
+  quarter_seconds_remaining,
+  half_seconds_remaining,
+  game_seconds_remaining,
+  game_half,
+  qtr,
+  goal_to_go,
+  ydstogo,
+  play_type,
+  shotgun,
+  no_huddle,
+  home_timeouts_remaining,
+  away_timeouts_remaining,
+  timeout,
+  posteam_timeouts_remaining,
+  defteam_timeouts_remaining,
+  total_home_score,
+  total_away_score,
+  posteam_score,
+  defteam_score,
+  score_differential,
+  special_teams_play,
+  fixed_drive,
+  away_score,
+  home_score,
+  location,
+  div_game,
+  roof,
+  surface,
   home_opening_kickoff
 )
 GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
 
-GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~n_distinct(.) > 1))
+GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~ n_distinct(.) > 1))
 
-train_set <- sample(1:nrow(GFI_GLM_ALL), 0.7*nrow(GFI_GLM_ALL))
+train_set <- sample(1:nrow(GFI_GLM_ALL), 0.7 * nrow(GFI_GLM_ALL))
 
-#Training set 
-gfi_glm_train <- GFI_GLM_ALL[train_set,]
-gfi_glm_validation <- GFI_GLM_ALL[-train_set,]
+# Training set
+gfi_glm_train <- GFI_GLM_ALL[train_set, ]
+gfi_glm_validation <- GFI_GLM_ALL[-train_set, ]
 
 library(stats)
-model_glm <- glm(fourth_down_converted ~ ., data = gfi_glm_train, family = "binomial", control=list(maxit = 100))
-model_glm <- step(model_glm, direction="backward")
+model_glm <- glm(fourth_down_converted ~ ., data = gfi_glm_train, family = "binomial", control = list(maxit = 100))
+model_glm <- step(model_glm, direction = "backward")
 summary(model_glm)
 ```
 
@@ -125,8 +126,9 @@ confusionMatrix(predict_glm_factor, as.factor(gfi_glm_validation$fourth_down_con
 Now we will run future models on just inputs the stepwise GLM found significant.
 
 ```{r}
-#Include only variables we want to use in prediction
-GFI_small <- select(GFI_ALL, 
+# Include only variables we want to use in prediction
+GFI_small <- select(
+  GFI_ALL,
   fourth_down_converted,
   yardline_100,
   half_seconds_remaining,
@@ -146,24 +148,24 @@ GFI_small <- select(GFI_ALL,
 
 GFI_small <- GFI_small %>% mutate_if(is.character, as.factor)
 
-GFI_small <- GFI_small %>% select(where(~n_distinct(.) > 1))
+GFI_small <- GFI_small %>% select(where(~ n_distinct(.) > 1))
 
 library(janitor)
 GFI_small <- clean_names(GFI_small)
 
-#Model Matrix for ANN
-GFI_mm <- as.data.frame(model.matrix(~.-1,GFI_small))
+# Model Matrix for ANN
+GFI_mm <- as.data.frame(model.matrix(~ . - 1, GFI_small))
 
 
-#Normalize the data
+# Normalize the data
 normalize <- function(x) {
-  return ((x - min(x)) / (max(x) - min(x)))
+  return((x - min(x)) / (max(x) - min(x)))
 }
 
-# we are going to normalize everything 
-#Create Labels for KNN 
+# we are going to normalize everything
+# Create Labels for KNN
 GFI_norm <- as.data.frame(lapply(GFI_mm[-1], normalize))
-GFI_labels <- GFI_mm[,1]
+GFI_labels <- GFI_mm[, 1]
 ```
 
 ## GLM
@@ -171,7 +173,7 @@ GFI_labels <- GFI_mm[,1]
 ### Training
 ```{r}
 library(stats)
-model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial", control=list(maxit = 100))
+model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial", control = list(maxit = 100))
 summary(model_glm)
 ```
 
@@ -189,8 +191,15 @@ confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
 ### Training
 ```{r, cache=TRUE}
 library(neuralnet)
-model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax=1000000, hidden=3)
+model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
 plot(model_ann)
+
+model_ann2 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(3, 3))
+model_ann3 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(2, 2, 2))
+model_ann4 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(5))
+model_ann5 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(4, 3))
+model_ann6 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(1, 2, 3))
+model_ann7 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(5, 5, 5))
 ```
 
 ### Predicting
@@ -211,8 +220,10 @@ confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
 ```{r}
 library(class)
 
-knn_pred <- knn(train = GFI_norm, test = GFI_norm,
-                      cl = GFI_labels, k=5)
+knn_pred <- knn(
+  train = GFI_norm, test = GFI_norm,
+  cl = GFI_labels, k = 5
+)
 
 confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
 ```
@@ -223,7 +234,7 @@ confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
 ### Training
 ```{r}
 library(kernlab)
-model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar=list(sigma=0.2))
+model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar = list(sigma = 0.2))
 ```
 
 ### Predicting
@@ -240,7 +251,7 @@ confusionMatrix(as.factor(predict_svm), as.factor(GFI_labels))
 ```{r}
 library(C50)
 
-model_tree <- C5.0(as.factor(fourth_down_converted) ~ ., data=GFI_small)
+model_tree <- C5.0(as.factor(fourth_down_converted) ~ ., data = GFI_small)
 summary(model_tree)
 ```
 
@@ -280,13 +291,13 @@ summary(predictions)
 
 ```{r}
 set.seed(123)
-train_set <- sample(1:nrow(predictions), 0.7*nrow(predictions))
+train_set <- sample(1:nrow(predictions), 0.7 * nrow(predictions))
 
-#Training set 
-train_data <- predictions[train_set,]
+# Training set
+train_data <- predictions[train_set, ]
 str(train_data)
 
-val_data <- predictions[-train_set,]
+val_data <- predictions[-train_set, ]
 str(val_data)
 ```
 
@@ -298,7 +309,7 @@ library(C50)
 
 set.seed(123)
 
-second_level_tree <- C5.0(as.factor(GFI_labels) ~ ., data=train_data)
+second_level_tree <- C5.0(as.factor(GFI_labels) ~ ., data = train_data)
 summary(second_level_tree)
 ```
 
@@ -325,7 +336,7 @@ First, we want a stacked model that outputs a probability, and not a binary resp
 
 ### Training
 ```{r, cache=TRUE}
-stacked_glm <- glm(GFI_labels ~ .-knn, data=train_data)
+stacked_glm <- glm(GFI_labels ~ . - knn, data = train_data)
 summary(stacked_glm)
 ```
 
@@ -342,10 +353,9 @@ ann_model, svm_model, glm_model, tree_model, stacked_glm
 
 ```{r}
 
-gfi <- function(df, models, oppteam){
-
+gfi <- function(df, models, oppteam) {
   model_outs <- data.frame(
-    "glm" = predict(models$glm_model, newdata=df),
+    "glm" = predict(models$glm_model, newdata = df),
     "ann" = compute(models$ann_model, df)$net.result,
     "svm" = predict(models$svm_model, df),
     "tree" = predict(models$tree, df)
@@ -371,8 +381,7 @@ gfi <- function(df, models, oppteam){
   failure <- nflfastR::calculate_expected_points(opp_df) %>%
     dplyr::select(ep)
 
-  return (ifelse((prob_success * success$ep + (1-prob_success) * failure$ep * -1) > 0, "Go For It", "Don't Go For It"))
-
+  return(ifelse((prob_success * success$ep + (1 - prob_success) * failure$ep * -1) > 0, "Go For It", "Don't Go For It"))
 }
 ```
 
@@ -401,6 +410,6 @@ input_1 <- data.frame(
   "roof" = ,
   "down" = ,
   "posteam_timeouts_remaining" = ,
-  "defteam_timeouts_remaining," =  
-)
+  "defteam_timeouts_remaining," =
+  )
 ```
