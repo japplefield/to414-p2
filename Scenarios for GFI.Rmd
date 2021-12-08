@@ -623,7 +623,7 @@ input_22 <- data.frame(
 ```
 
 ```{r}
-#half second remaining 600 in second half
+#600 seconds remaining in second half
 input_23 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -645,10 +645,12 @@ input_23 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2 
 )
+
+#don't go for it 
 ```
 
 ```{r}
-#half second remaining 120 in the first half
+#2 min remaining 120 in the first half
 input_24 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
