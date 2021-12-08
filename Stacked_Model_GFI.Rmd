@@ -396,7 +396,7 @@ summary(stacked_glm)
 
 Now we will define the actual decision function. The function requires as input a data frame with the following fields:
 
-fourth_down_converted, yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, timeout, total_home_score, total_away_score, posteam_score, defteam_score, special_teams_play, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
+yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, timeout, posteam_score, defteam_score, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
 
 It requires a data frame called models that contains the following fields:
 
