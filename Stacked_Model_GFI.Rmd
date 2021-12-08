@@ -4,20 +4,25 @@ author: "Hip Hip Array"
 date: "12/03/2021"
 output:
   html_document:
+    code_folding: hide
     highlight: tango
     theme: united
     toc: true
-    toc_depth: 3
+    toc_depth: 2
     toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
 ```
 
 # Install packages and Load Data
 
-```{r, cache=TRUE}
+```{r}
 library(nflfastR)
 
 future::plan("multisession")
@@ -55,7 +60,7 @@ GFI_ALL <- slice(GFI_ALL, sample(1:n()))
 ## Variable Selection with GLM
 
 ### Training
-```{r, cache=TRUE}
+```{r}
 GFI_GLM_ALL <- select(
   GFI_ALL,
   fourth_down_converted,
@@ -181,7 +186,7 @@ glmcm
 ## ANN
 
 ### Training
-```{r, cache=TRUE}
+```{r}
 library(neuralnet)
 model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
 plot(model_ann)
@@ -226,8 +231,6 @@ for (i in 1:100) {
 
   kappa <- confusionMatrix(as.factor(knn_pred), as.factor(gfi_knn_validation_labels))$overall["Kappa"]
 
-  print(i)
-  print(kappa)
   if (kappa > best_kappa) {
     best_k <- i
     best_kappa <- kappa
@@ -265,15 +268,13 @@ train_set <- sample(1:nrow(GFI_small), 0.7 * nrow(GFI_small))
 gfi_svm_train <- GFI_small[train_set, ]
 gfi_svm_validation <- GFI_small[-train_set, ]
 
-for (i in c(2:10 %o% 10^(-5:2))) {
+for (i in c(2:10 %o% 10^(-5:1))) {
   model_svm <- ksvm(fourth_down_converted ~ ., data = gfi_svm_train, kernel = "rbfdot", kpar = list(sigma = i))
   predict_svm <- predict(model_svm, gfi_svm_validation)
   predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
 
   kappa <- confusionMatrix(as.factor(predict_svm), as.factor(gfi_svm_validation$fourth_down_converted))$overall["Kappa"]
 
-  print(i)
-  print(kappa)
   if (kappa > best_kappa) {
     best_sigma <- i
     best_kappa <- kappa
@@ -332,7 +333,7 @@ predictions <- as.data.frame(GFI_labels)
 predictions$glm <- predict_glm
 predictions$knn <- knn_pred
 predictions$ann <- predict_ann
-predictions$svm <- predict_svm
+predictions$svm <- as.numeric(predict_svm)
 predictions$tree <- predict_tree
 
 str(predictions)
@@ -389,8 +390,11 @@ First, we want a stacked model that outputs a probability, and not a binary resp
 ### Training
 ```{r, cache=TRUE}
 stacked_glm <- glm(GFI_labels ~ . - knn, data = train_data)
+stacked_glm <- step(stacked_glm, direction = "backward")
 summary(stacked_glm)
 ```
+
+As it turns out, the ann is also not that useful per the stacked glm, so it can be omitted from the function we create too.
 
 ## Decision Function
 
@@ -398,22 +402,22 @@ Now we will define the actual decision function. The function requires as input 
 
 yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, timeout, posteam_score, defteam_score, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
 
-It requires a data frame called models that contains the following fields:
+It requires the following models:
 
 ann_model, svm_model, glm_model, tree_model, stacked_glm
 
-
 ```{r}
-gfi <- function(df, models, oppteam) {
+gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
+  df$game_half <- factor(df$game_half, levels(GFI_small$game_half))
+  df$play_type <- factor(df$play_type, levels(GFI_small$play_type))
+
   model_outs <- data.frame(
-    "glm" = predict(models$glm_model, newdata = df),
-    "ann" = compute(models$ann_model, df)$net.result,
-    "svm" = predict(models$svm_model, df),
-    "tree" = predict(models$tree, df)
+    "glm" = predict(glm_model, newdata = df),
+    "svm" = predict(svm_model, df),
+    "tree" = predict(tree, df)
   )
 
-  library(neuralnet)
-  prob_success <- predict(models$stacked_glm, model_outs)
+  prob_success <- predict(stacked_glm, model_outs)
 
   pos_df <- df
   pos_df$down <- 1
@@ -440,43 +444,29 @@ Now that the function has been defined we need a scenario:
 
 ```{r}
 input_1 <- data.frame(
-  "fourth_down_converted" = 0,
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
+  "shotgun" = 0,
   "timeout" = 0,
-  "total_home_score" = 21,
-  "total_away_score" = 3,
   "posteam_score" = 21,
   "defteam_score" = 3,
-  "special_teams_play" = 0,
   "away_score" = 3,
   "home_score" = 21,
   "season" = 2018,
   "home_team" = "DET",
   "posteam" = "DET",
-  "roof" = "outdoor",
+  "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
 ```
 
-We also need the trained models:
-```{r}
-models <- data.frame(
-  "ann_model" = model_ann,
-  "svm_model" = model_svm,
-  "glm_model" = model_glm,
-  "tree_model" = model_tree,
-  "stacked_glm" = stacked_glm
-)
-```
-
 Run the function on the sample input
 ```{r}
-gfi(input_1, models, "CHI")
+gfi(input_1, stacked_glm, model_svm, model_tree, model_glm, "CHI")
 ```
