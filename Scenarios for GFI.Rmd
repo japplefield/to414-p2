@@ -14,36 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 input_1 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
-  "shotgun" = 0,
-  "timeout" = 0,
-  "posteam_score" = 21, 
-  "defteam_score" = 3,
-  "away_score" = 3,
-  "home_score" = 21,
-  "season" = 2018,
-  "home_team" = "DET",
-  "posteam" = "DET",
-  "roof" = "dome",
-  "down" = 3,
-  "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
-)
-```
-
-```{r}
-#Changing yardline_100 to 50 
-
-input_2 <- data.frame(
-  "yardline_100" = 50,
-  "half_seconds_remaining" = 120,
-  "game_half" = 1,
-  "goal_to_go" = 0,
-  "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -56,8 +30,37 @@ input_2 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#Answer was don't go for it 
+```
+
+```{r}
+#Changing yardline_100 to 50 
+input_2 <- data.frame(
+  "yardline_100" = 50,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+#Answer was don't go for it 
 ```
 
 ```{r}
@@ -66,10 +69,10 @@ input_2 <- data.frame(
 input_3 <- data.frame(
   "yardline_100" = 80,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -82,8 +85,10 @@ input_3 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#Answer was don't go for it
 ```
 
 ```{r}
@@ -92,10 +97,10 @@ input_3 <- data.frame(
 input_4 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 14,
@@ -108,8 +113,10 @@ input_4 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#Answer was don't go for it 
 ```
 
 
@@ -119,10 +126,10 @@ input_4 <- data.frame(
 input_5 <- data.frame(
   "yardline_100" = 50,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 14,
@@ -135,8 +142,10 @@ input_5 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#Don't go for it 
 ```
 
 ```{r}
@@ -145,10 +154,10 @@ input_5 <- data.frame(
 input_6 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -161,20 +170,23 @@ input_6 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#Don't go for it 
 
 ```
 
 ```{r}
-#Team with possession has 1 timeout, defeding team has 2
+#Team with possession has 1 timeout, defending team has 2
+
 input_7 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -187,19 +199,22 @@ input_7 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 1,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #Team with possession has 3 timeouts, defending team has 2
+
 input_8 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -212,19 +227,22 @@ input_8 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 3,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #Team with possession has 0 timeouts, defending team has 2
+
 input_9 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -237,19 +255,22 @@ input_9 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 0,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #Team with possession has 2 timeouts, defending team has 1
+
 input_10 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -262,19 +283,22 @@ input_10 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 1 
+  "defteam_timeouts_remaining" = 1
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #Team with possession has 2 timeouts, defending team has 3
+
 input_11 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -287,8 +311,10 @@ input_11 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 3 
+  "defteam_timeouts_remaining" = 3
 )
+
+#don't go for it 
 ```
 
 ```{r}
@@ -297,10 +323,10 @@ input_11 <- data.frame(
 input_12 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -313,19 +339,22 @@ input_12 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 0 
+  "defteam_timeouts_remaining" = 0
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #Yards to go changed to 2
+
 input_13 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 2,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -338,8 +367,10 @@ input_13 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#go for it 
 ```
 
 ```{r}
@@ -365,17 +396,20 @@ input_14 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2 
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #half second remaining 600 in first half
+
 input_15 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -388,19 +422,22 @@ input_15 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 ```{r}
 #half second remaining 600 in second half
+
 input_16 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
-  "game_half" = 2,
+  "game_half" = "Half2",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -413,19 +450,22 @@ input_16 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#go for it 
 ```
 
 ```{r}
 #half second remaining 120 in the first half
+
 input_17 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half2",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
@@ -438,19 +478,22 @@ input_17 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#go for it 
 ```
 
 ```{r}
 #Base input but with timeout = 1 (called a timeout)
+
 input_18 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
-  "game_half" = 1,
+  "game_half" = "Half1",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 1,
   "posteam_score" = 21,
@@ -463,25 +506,27 @@ input_18 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 #Changing time remaining and home team losing 
 ```{r}
-#half second remaining 600 in first half and home team losing
+#second half remaining 600 in first half and home team losing
 input_19 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
-  "game_half" = 1,
+  "game_half" = "Half2",
   "goal_to_go" = 0,
   "ydstogo" = 5,
-  "play_type" = 1,
+  "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
   "posteam_score" = 21,
-  "defteam_score" = 27,
-  "away_score" = 27,
+  "defteam_score" = 3,
+  "away_score" = 3,
   "home_score" = 21,
   "season" = 2018,
   "home_team" = "DET",
@@ -489,8 +534,10 @@ input_19 <- data.frame(
   "roof" = "dome",
   "down" = 3,
   "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2 
+  "defteam_timeouts_remaining" = 2
 )
+
+#don't go for it 
 ```
 
 ```{r}
@@ -516,6 +563,8 @@ input_20 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2 
 )
+
+#don't go for it 
 ```
 
 ```{r}
@@ -541,6 +590,8 @@ input_21 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2 
 )
+
+#don't go for it
 ```
 
 #Changing time remaining and teams are tied 
@@ -567,6 +618,8 @@ input_22 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2 
 )
+
+#don't go for it 
 ```
 
 ```{r}
@@ -1585,5 +1638,32 @@ input_61 <- data.frame(
 )
 ```
 
+```{r}
+
+#original but changed yds to go to  1 
+input_62 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+#answer was go for it 
+```
 
 
