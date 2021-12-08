@@ -18,11 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Install packages and Load Data
 
 ```{r, cache=TRUE}
-# install.packages("devtools")
-# install.packages("nflfastR")
-# install.packages("gsisdecoder")
-# install.packages(gdata)
-
 library(nflfastR)
 
 future::plan("multisession")
@@ -179,7 +174,8 @@ predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
 predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
 predict_glm_factor <- as.factor(predict_glm_factor)
 library(caret)
-confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
+glmcm <- confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
+glmcm
 ```
 
 ## ANN
@@ -189,13 +185,6 @@ confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
 library(neuralnet)
 model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
 plot(model_ann)
-
-model_ann2 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(3, 3))
-model_ann3 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(2, 2, 2))
-model_ann4 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(5))
-model_ann5 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(4, 3))
-model_ann6 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(1, 2, 3))
-model_ann7 <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 100000000, hidden = c(5, 5, 5))
 ```
 
 ### Predicting
@@ -206,7 +195,8 @@ predict_ann <- predict_ann$net.result
 predict_ann_factor <- ifelse(predict_ann < 0.5, 0, 1)
 predict_ann_factor <- as.factor(predict_ann_factor)
 
-confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
+anncm <- confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
+anncm
 ```
 
 
@@ -254,7 +244,8 @@ knn_pred <- knn(
   cl = GFI_labels, k = best_k
 )
 
-confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
+knncm <- confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
+knncm
 ```
 
 ## SVM
@@ -293,7 +284,7 @@ for (i in c(2:10 %o% 10^(-5:2))) {
 ### Training
 ```{r}
 library(kernlab)
-model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar = list(sigma = 0.2))
+model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar = list(sigma = best_sigma))
 ```
 
 ### Predicting
@@ -301,7 +292,8 @@ model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot"
 predict_svm <- predict(model_svm, GFI_small)
 predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
 
-confusionMatrix(as.factor(predict_svm), as.factor(GFI_labels))
+svmcm <- confusionMatrix(as.factor(predict_svm), as.factor(GFI_labels))
+svmcm
 ```
 
 ## Decision Tree
@@ -318,18 +310,19 @@ summary(model_tree)
 ```{r}
 predict_tree <- predict(model_tree, GFI_small)
 
-confusionMatrix(predict_tree, as.factor(GFI_labels))
+treecm <- confusionMatrix(predict_tree, as.factor(GFI_labels))
+treecm
 ```
 
 
 ## Summary Kappas
 Kappa for each model is as follows:
 
-- Logistic Regression: 0.5533
-- KNN: 0.5048
-- ANN: 0.6133
-- SVM: 0.8472  
-- Decision Tree: 0.6376 
+- Logistic Regression: `r glmcm$overall["Kappa"]`
+- KNN: `r knncm$overall["Kappa"]`
+- ANN: `r anncm$overall["Kappa"]`
+- SVM: `r svmcm$overall["Kappa"]`
+- Decision Tree: `r treecm$overall["Kappa"]`
 
 # Stacked Model
 
@@ -411,7 +404,6 @@ ann_model, svm_model, glm_model, tree_model, stacked_glm
 
 
 ```{r}
-
 gfi <- function(df, models, oppteam) {
   model_outs <- data.frame(
     "glm" = predict(models$glm_model, newdata = df),
@@ -444,7 +436,7 @@ gfi <- function(df, models, oppteam) {
 }
 ```
 
-Now that the function has been defined...
+Now that the function has been defined we need a scenario:
 
 ```{r}
 input_1 <- data.frame(
@@ -471,4 +463,20 @@ input_1 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
+```
+
+We also need the trained models:
+```{r}
+models <- data.frame(
+  "ann_model" = model_ann,
+  "svm_model" = model_svm,
+  "glm_model" = model_glm,
+  "tree_model" = model_tree,
+  "stacked_glm" = stacked_glm
+)
+```
+
+Run the function on the sample input
+```{r}
+gfi(input_1, models, "CHI")
 ```
