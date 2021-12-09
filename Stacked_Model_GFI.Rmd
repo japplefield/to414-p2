@@ -417,7 +417,15 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
     "tree" = predict(tree, df)
   )
 
-  prob_success <- predict(stacked_glm, model_outs)
+  glm_logit <- predict(stacked_glm, model_outs)
+  
+  logit2prob <- function(logit){
+    odds <- exp(logit)
+    prob <- odds / (1 + odds)
+    return(prob)
+  }
+  
+  prob_success <- logi2prob(glm_logit)
 
   pos_df <- df
   pos_df$down <- 1
