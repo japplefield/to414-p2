@@ -436,7 +436,9 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
   failure <- nflfastR::calculate_expected_points(opp_df) %>%
     dplyr::select(ep)
 
-  return(ifelse((prob_success * success$ep + (1 - prob_success) * failure$ep * -1) > 0, "Go For It", "Don't Go For It"))
+  tab <- matrix(c(ifelse((prob_success * success$ep + (1 - prob_success) * failure$ep * -1) > 0, "Go For It", "Don't Go For It"), prob_success, success, failure), ncol = 4, byrow = TRUE)
+  colnames(tab) <- c('Go For It?', 'Probability of Success', 'Exp. Points if Success', 'Exp. Points if Fail')
+  return(tab)
 }
 ```
 
