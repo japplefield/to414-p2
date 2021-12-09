@@ -1668,4 +1668,30 @@ input_62 <- data.frame(
 #answer was go for it 
 ```
 
+```{r}
 
+#Lions vs Vikings Scenario
+input_63 <- data.frame(
+  "yardline_100" = 72,
+  "half_seconds_remaining" = 248,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "pass",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 23,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 23,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 3
+)
+
+#answer was go for it 
+```
