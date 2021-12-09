@@ -1684,13 +1684,99 @@ input_63 <- data.frame(
   "defteam_score" = 21,
   "away_score" = 21,
   "home_score" = 23,
-  "season" = 2018,
+  "season" = 2021,
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
   "down" = 4,
   "posteam_timeouts_remaining" = 1,
   "defteam_timeouts_remaining" = 3
+)
+
+#answer was go for it 
+```
+
+
+```{r}
+
+#Lions vs Vikings Scenario
+input_64 <- data.frame(
+  "yardline_100" = 99,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21 ,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+#answer was go for it 
+```
+
+
+```{r}
+
+#Lions vs Vikings Scenario
+input_64 <- data.frame(
+  "yardline_100" = 63,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21 ,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+#answer was go for it 
+```
+
+```{r}
+
+#Lions vs Vikings Scenario
+input_65 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 3,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21 ,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
 )
 
 #answer was go for it 
