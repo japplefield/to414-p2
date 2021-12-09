@@ -425,7 +425,7 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
     return(prob)
   }
   
-  prob_success <- logi2prob(glm_logit)
+  prob_success <- logit2prob(glm_logit)
 
   pos_df <- df
   pos_df$down <- 1
