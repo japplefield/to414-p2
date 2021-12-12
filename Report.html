@@ -2681,10 +2681,15 @@ div.tocify {
 <span id="cb46-37"><a href="#cb46-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb46-38"><a href="#cb46-38" aria-hidden="true" tabindex="-1"></a>  exp_net_pts <span class="ot">&lt;-</span> prob_success <span class="sc">*</span> success<span class="sc">$</span>ep <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">-</span> prob_success) <span class="sc">*</span> failure<span class="sc">$</span>ep <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
 <span id="cb46-39"><a href="#cb46-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-40"><a href="#cb46-40" aria-hidden="true" tabindex="-1"></a>  tab <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">ifelse</span>(exp_net_pts <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">&quot;Go For It&quot;</span>, <span class="st">&quot;Don&#39;t Go For It&quot;</span>), prob_success, success, failure, exp_net_pts), <span class="at">ncol =</span> <span class="dv">5</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb46-41"><a href="#cb46-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(tab) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Go For It?&quot;</span>, <span class="st">&quot;Probability of Success&quot;</span>, <span class="st">&quot;Exp. Points if Success&quot;</span>, <span class="st">&quot;Exp. Points if Fail&quot;</span>, <span class="st">&quot;Exp. Net Points&quot;</span>)</span>
-<span id="cb46-42"><a href="#cb46-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(tab)</span>
-<span id="cb46-43"><a href="#cb46-43" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb46-40"><a href="#cb46-40" aria-hidden="true" tabindex="-1"></a>  tab <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb46-41"><a href="#cb46-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Go For It?&quot;</span> <span class="ot">=</span> <span class="fu">ifelse</span>(exp_net_pts <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">&quot;Go For It&quot;</span>, <span class="st">&quot;Don&#39;t Go For It&quot;</span>)</span>
+<span id="cb46-42"><a href="#cb46-42" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb46-43"><a href="#cb46-43" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span><span class="st">`</span><span class="at">Probability of Success</span><span class="st">`</span> <span class="ot">&lt;-</span> prob_success</span>
+<span id="cb46-44"><a href="#cb46-44" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span><span class="st">`</span><span class="at">Exp Points if Success</span><span class="st">`</span> <span class="ot">&lt;-</span> success<span class="sc">$</span>ep</span>
+<span id="cb46-45"><a href="#cb46-45" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span><span class="st">`</span><span class="at">Exp Points if Fail</span><span class="st">`</span> <span class="ot">&lt;-</span> failure<span class="sc">$</span>ep</span>
+<span id="cb46-46"><a href="#cb46-46" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span><span class="st">`</span><span class="at">Exp Net Points</span><span class="st">`</span> <span class="ot">&lt;-</span> exp_net_pts</span>
+<span id="cb46-47"><a href="#cb46-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(tab)</span>
+<span id="cb46-48"><a href="#cb46-48" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Now that the function has been defined we will create a variety of scenarios and apply the function to them.</p>
 <div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Base input</span></span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>input_1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
@@ -4460,7 +4465,7 @@ div.tocify {
 <span id="cb47-1772"><a href="#cb47-1772" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb47-1773"><a href="#cb47-1773" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-1774"><a href="#cb47-1774" aria-hidden="true" tabindex="-1"></a><span class="co"># answer was go for it</span></span></code></pre></div>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>input_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  input_1, input_2, input_3, input_4, input_5, input_6, input_7, input_8, input_9,</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  input_10, input_11, input_12, input_13, input_14, input_15, input_16, input_17, input_18, input_19,</span>
 <span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  input_20, input_21, input_22, input_23, input_24, input_25, input_26, input_27, input_28, input_29,</span>
@@ -4470,9 +4475,107 @@ div.tocify {
 <span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  input_60, input_61, input_62, input_63, input_64, input_65, input_66</span>
 <span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>Run through list of scenarios and create data frame with scenario outputs Note: Need to change opposing team individually within function</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">lapply</span>(input_list, gfi, <span class="at">stacked_glm =</span> stacked_glm, <span class="at">svm_model =</span> model_svm, <span class="at">tree =</span> model_tree, <span class="at">glm_model =</span> model_glm, <span class="at">oppteam =</span> <span class="st">&quot;CHI&quot;</span>)</span>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">gfi</span>(inputs, <span class="at">stacked_glm =</span> stacked_glm, <span class="at">svm_model =</span> model_svm, <span class="at">tree =</span> model_tree, <span class="at">glm_model =</span> model_glm, <span class="at">oppteam =</span> <span class="st">&quot;CHI&quot;</span>)</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="co"># names(output) = c(&#39;input_1&#39;, &#39;input_2&#39;, &#39;input_3&#39;)</span></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>outputdf <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">Reduce</span>(rbind, output))</span></code></pre></div>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">clean_names</span>(output)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>results_summary <span class="ot">&lt;-</span> <span class="fu">cbind</span>(inputs, output)</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>game_half <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>game_half)</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>play_type <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>play_type)</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>home_team <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>home_team)</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>posteam <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>posteam)</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>roof <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>roof)</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>results_summary<span class="sc">$</span>go_for_it <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(results_summary<span class="sc">$</span>go_for_it)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>go_for_it <span class="ot">&lt;-</span> results_summary <span class="sc">%&gt;%</span> <span class="fu">filter</span>(go_for_it <span class="sc">==</span> <span class="st">&quot;Go For It&quot;</span>)</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(go_for_it)</span></code></pre></div>
+<pre><code>##   yardline_100   half_seconds_remaining game_half    goal_to_go    ydstogo     
+##  Min.   :10.00   Min.   :120.0          Half1:49   Min.   :0    Min.   :1.000  
+##  1st Qu.:10.00   1st Qu.:120.0          Half2:13   1st Qu.:0    1st Qu.:5.000  
+##  Median :10.00   Median :120.0                     Median :0    Median :5.000  
+##  Mean   :12.79   Mean   :282.6                     Mean   :0    Mean   :4.823  
+##  3rd Qu.:10.00   3rd Qu.:600.0                     3rd Qu.:0    3rd Qu.:5.000  
+##  Max.   :63.00   Max.   :600.0                     Max.   :0    Max.   :7.000  
+##  play_type    shotgun          timeout        posteam_score   defteam_score  
+##  pass: 0   Min.   :0.0000   Min.   :0.00000   Min.   :14.00   Min.   : 3.00  
+##  run :62   1st Qu.:0.0000   1st Qu.:0.00000   1st Qu.:14.00   1st Qu.: 3.00  
+##            Median :0.0000   Median :0.00000   Median :21.00   Median :14.00  
+##            Mean   :0.2258   Mean   :0.03226   Mean   :18.97   Mean   :11.84  
+##            3rd Qu.:0.0000   3rd Qu.:0.00000   3rd Qu.:21.00   3rd Qu.:19.25  
+##            Max.   :1.0000   Max.   :1.00000   Max.   :21.00   Max.   :27.00  
+##    away_score      home_score        season     home_team posteam    roof   
+##  Min.   : 3.00   Min.   :14.00   Min.   :2018   DET:33    DET:33   dome:62  
+##  1st Qu.: 3.00   1st Qu.:14.00   1st Qu.:2018   NE :29    NE :29            
+##  Median :14.00   Median :21.00   Median :2018                               
+##  Mean   :11.84   Mean   :18.97   Mean   :2018                               
+##  3rd Qu.:19.25   3rd Qu.:21.00   3rd Qu.:2018                               
+##  Max.   :27.00   Max.   :21.00   Max.   :2018                               
+##       down       posteam_timeouts_remaining defteam_timeouts_remaining
+##  Min.   :3.000   Min.   :0.000              Min.   :0.000             
+##  1st Qu.:3.000   1st Qu.:2.000              1st Qu.:2.000             
+##  Median :3.000   Median :2.000              Median :2.000             
+##  Mean   :3.032   Mean   :1.935              Mean   :1.935             
+##  3rd Qu.:3.000   3rd Qu.:2.000              3rd Qu.:2.000             
+##  Max.   :4.000   Max.   :3.000              Max.   :3.000             
+##            go_for_it  probability_of_success exp_points_if_success
+##  Don&#39;t Go For It: 0   Min.   :0.4095         Min.   :2.377        
+##  Go For It      :62   1st Qu.:0.4421         1st Qu.:5.909        
+##                       Median :0.4527         Median :5.909        
+##                       Mean   :0.4710         Mean   :5.721        
+##                       3rd Qu.:0.5066         3rd Qu.:6.016        
+##                       Max.   :0.5638         Max.   :6.016        
+##  exp_points_if_fail exp_net_points   
+##  Min.   :-0.7620    Min.   :0.04573  
+##  1st Qu.:-0.7620    1st Qu.:2.75856  
+##  Median :-0.3214    Median :2.89670  
+##  Mean   :-0.2864    Mean   :2.84380  
+##  3rd Qu.:-0.3214    3rd Qu.:3.21587  
+##  Max.   : 2.8674    Max.   :3.67590</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>dont_go_for_it <span class="ot">&lt;-</span> results_summary <span class="sc">%&gt;%</span> <span class="fu">filter</span>(go_for_it <span class="sc">==</span> <span class="st">&quot;Don&#39;t Go For It&quot;</span>)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dont_go_for_it)</span></code></pre></div>
+<pre><code>##   yardline_100   half_seconds_remaining game_half   goal_to_go    ydstogo    
+##  Min.   :72.00   Min.   :120            Half1:3   Min.   :0    Min.   :1.00  
+##  1st Qu.:78.00   1st Qu.:120            Half2:1   1st Qu.:0    1st Qu.:1.75  
+##  Median :80.00   Median :120                      Median :0    Median :3.50  
+##  Mean   :82.75   Mean   :152                      Mean   :0    Mean   :3.25  
+##  3rd Qu.:84.75   3rd Qu.:152                      3rd Qu.:0    3rd Qu.:5.00  
+##  Max.   :99.00   Max.   :248                      Max.   :0    Max.   :5.00  
+##  play_type    shotgun     timeout     posteam_score   defteam_score
+##  pass:1    Min.   :0   Min.   :0.00   Min.   :14.00   Min.   : 3   
+##  run :3    1st Qu.:0   1st Qu.:0.00   1st Qu.:19.25   1st Qu.: 3   
+##            Median :0   Median :0.00   Median :21.00   Median :12   
+##            Mean   :0   Mean   :0.25   Mean   :19.75   Mean   :12   
+##            3rd Qu.:0   3rd Qu.:0.25   3rd Qu.:21.50   3rd Qu.:21   
+##            Max.   :0   Max.   :1.00   Max.   :23.00   Max.   :21   
+##    away_score   home_score        season     home_team posteam   roof  
+##  Min.   : 3   Min.   :14.00   Min.   :2018   DET:3     DET:3   dome:4  
+##  1st Qu.: 3   1st Qu.:19.25   1st Qu.:2018   NE :1     NE :1           
+##  Median :12   Median :21.00   Median :2018                             
+##  Mean   :12   Mean   :19.75   Mean   :2019                             
+##  3rd Qu.:21   3rd Qu.:21.50   3rd Qu.:2019                             
+##  Max.   :21   Max.   :23.00   Max.   :2021                             
+##       down     posteam_timeouts_remaining defteam_timeouts_remaining
+##  Min.   :3.0   Min.   :1.00               Min.   :2.00              
+##  1st Qu.:3.0   1st Qu.:1.75               1st Qu.:2.00              
+##  Median :3.5   Median :2.00               Median :2.00              
+##  Mean   :3.5   Mean   :1.75               Mean   :2.25              
+##  3rd Qu.:4.0   3rd Qu.:2.00               3rd Qu.:2.25              
+##  Max.   :4.0   Max.   :2.00               Max.   :3.00              
+##            go_for_it probability_of_success exp_points_if_success
+##  Don&#39;t Go For It:4   Min.   :0.5142         Min.   :0.507        
+##  Go For It      :0   1st Qu.:0.5142         1st Qu.:1.223        
+##                      Median :0.5416         Median :1.462        
+##                      Mean   :0.5442         Mean   :1.310        
+##                      3rd Qu.:0.5716         3rd Qu.:1.549        
+##                      Max.   :0.5794         Max.   :1.810        
+##  exp_points_if_fail exp_net_points   
+##  Min.   :3.293      Min.   :-1.8801  
+##  1st Qu.:3.684      1st Qu.:-1.2960  
+##  Median :3.814      Median :-1.1012  
+##  Mean   :3.988      Mean   :-1.1047  
+##  3rd Qu.:4.118      3rd Qu.:-0.9099  
+##  Max.   :5.032      Max.   :-0.3360</code></pre>
 </div>
 </div>
 <div id="scenarios" class="section level1" number="7">

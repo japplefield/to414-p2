@@ -459,8 +459,13 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
 
   exp_net_pts <- prob_success * success$ep + (1 - prob_success) * failure$ep * -1
 
-  tab <- matrix(c(ifelse(exp_net_pts > 0, "Go For It", "Don't Go For It"), prob_success, success, failure, exp_net_pts), ncol = 5, byrow = TRUE)
-  colnames(tab) <- c("Go For It?", "Probability of Success", "Exp. Points if Success", "Exp. Points if Fail", "Exp. Net Points")
+  tab <- data.frame(
+    "Go For It?" = ifelse(exp_net_pts > 0, "Go For It", "Don't Go For It")
+  )
+  tab$`Probability of Success` <- prob_success
+  tab$`Exp Points if Success` <- success$ep
+  tab$`Exp Points if Fail` <- failure$ep
+  tab$`Exp Net Points` <- exp_net_pts
   return(tab)
 }
 ```
@@ -2245,7 +2250,7 @@ input_66 <- data.frame(
 ```
 
 ```{r}
-input_list <- list(
+inputs <- rbind(
   input_1, input_2, input_3, input_4, input_5, input_6, input_7, input_8, input_9,
   input_10, input_11, input_12, input_13, input_14, input_15, input_16, input_17, input_18, input_19,
   input_20, input_21, input_22, input_23, input_24, input_25, input_26, input_27, input_28, input_29,
@@ -2259,9 +2264,24 @@ input_list <- list(
 Run through list of scenarios and create data frame with scenario outputs
 Note: Need to change opposing team individually within function
 ```{r}
-output <- lapply(input_list, gfi, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
+output <- gfi(inputs, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
 # names(output) = c('input_1', 'input_2', 'input_3')
-outputdf <- data.frame(Reduce(rbind, output))
+output <- clean_names(output)
+
+results_summary <- cbind(inputs, output)
+
+results_summary$game_half <- as.factor(results_summary$game_half)
+results_summary$play_type <- as.factor(results_summary$play_type)
+results_summary$home_team <- as.factor(results_summary$home_team)
+results_summary$posteam <- as.factor(results_summary$posteam)
+results_summary$roof <- as.factor(results_summary$roof)
+results_summary$go_for_it <- as.factor(results_summary$go_for_it)
+
+go_for_it <- results_summary %>% filter(go_for_it == "Go For It")
+summary(go_for_it)
+
+dont_go_for_it <- results_summary %>% filter(go_for_it == "Don't Go For It")
+summary(dont_go_for_it)
 ```
 
 # Scenarios
