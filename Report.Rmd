@@ -27,13 +27,9 @@ The purpose of this analysis is to provide football coaches, players, and fans w
 
 We will evaluate one choice for a given team: attempt to convert a fourth down, or do not. 
 
-*Fourth Down Expected Net Points:* The probability that the fourth down conversion will be successful, multiplied by the expected outcome of the remainder of the drive upon success, minus the probability that the fourth down conversion will not be successful times the expected outcome of the opponent’s drive starting from the spot of the turnover.
+*Fourth Down Expected Net Points:* The probability that the fourth down conversion will be successful, multiplied by the expected outcome of the remainder of the drive upon success, minus the probability that the fourth down conversion will not be successful times the expected outcome of the opponent’s drive starting from the spot of the turnover. In other words, Expected Net Points (ENP) comes from the following formula:
 
-```{=latex}
-$$
-p(\text{Success}) \times E(\text{Drive} | \text{Success}) - p(\overline{\text{Success}}) \times E(\text{Opponent Drive} | \overline{\text{Success}})
-$$
-```
+![](enp_formula.PNG)
 
 # Setup
 
