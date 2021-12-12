@@ -2320,13 +2320,11 @@ In general, we would prioritize expanding our model’s decision space in the ne
 
 TODO
 
-By using NFL Play-By-Play data, we have successfully built a model that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. 
+By using NFL Play-By-Play data, we have successfully built a model that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. We believe the function we've created is incredibly useful for coaches because it is a simple way to conduct an on-the-fly analysis of the decision whether to attempt a fourth down conversion or not. 
 
-## Fourth Down Conversion Success
+The model is not terribly accurate, with a kappa of only around 0.45, mostly due to the selection bias we've discussed above. Furthermore, the model has a weakness because it does not account for field goal outcomes when recommending a fourth down conversion with positive but fewer than 3 expected net points. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. The most accurate model is TODO
 
-Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
-
-This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent on this project because it can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this  spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
+This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent to further refine these models because this project can help football decision makers appropriately determine the best course of action which could then lead to winning the game.
 
 # Contributors
 
