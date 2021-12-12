@@ -44,6 +44,7 @@ library(neuralnet)
 library(nflfastR)
 library(stats)
 library(tidyverse)
+library(rmarkdown)
 ```
 
 ## Load Data
@@ -2252,6 +2253,7 @@ inputs <- rbind(
 
 Run through list of scenarios and create data frame with scenario outputs
 Note: Need to change opposing team individually within function
+
 ```{r}
 output <- gfi(inputs, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
 output <- clean_names(output)
@@ -2280,7 +2282,29 @@ Base scenario: Detroit is the home team with possession of the ball, on the 10 y
 
 # Results
 
-TODO
+## All Results
+
+The following table illustrates all scenarios we ran and the outputs:
+
+```{r}
+paged_table(results_summary)
+```
+
+## Go For It
+
+The following table illustrates the scenarios our model recommends attempting a fourth down conversion.
+
+```{r}
+paged_table(go_for_it)
+```
+
+## Don't Go For It
+
+The following table illustrates the scenarios our model recommends **not** attempting a fourth down conversion.
+
+```{r}
+paged_table(dont_go_for_it)
+```
 
 We ran a bunch of scenarios changing each of these variables one at a time to see if it affects if the team should go for it or not. We found that there is a cutoff for the yards to get to the opponent’s end zone. If there are 64 or less yards, our model predicts to go for it. If there are more than 64 yards to get to the end zone, then our model predicts to not go for it. 
 
