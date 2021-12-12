@@ -58,7 +58,7 @@ We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expa
 
 The data has 531,515 rows and 372 variables. Variable descriptions and dataset information can be found [here](https://www.nflfastr.com/articles/field_descriptions.html). Many of the variables in the dataset include information about the play itself, after the decision to go for it was made, and thus we will not include these variables in our prediction. 
 
-With a dataset of this magnitude and complexity there are many technical issues that we have run into. To start, we had trouble finding the adequate dataset as the NFL does not provide play-by-play data explicitley. Instead, third-parties have used web-scraping to extract the data and provide it to us. In doing so we had to be careful in what dataset we selected. 
+With a dataset of this magnitude and complexity there are many technical issues that we have run into. To start, we had trouble finding the adequate dataset as the NFL does not provide play-by-play data explicitly. Instead, third-parties have used web-scraping to extract the data and provide it to us. In doing so we had to be careful in what dataset we selected. 
 
 After choosing a dataset we also have to understand the dataset and decide what is relevant and what variables can actually be used in our prediction. Many variables are already predictions from the variables within the same dataset and we need to ensure we are not using any of these variables in predictions.
 
@@ -1396,7 +1396,7 @@ input_33 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
+# Answer was don't go for it
 
 # Total home score to 14 (now teams are tied with 14)
 
@@ -2134,10 +2134,7 @@ input_62 <- data.frame(
 
 # answer was go for it
 
-
-
-
-# Lions vs Vikings Scenario
+# Lions vs Vikings Real-Life Scenario
 input_63 <- data.frame(
   "yardline_100" = 72,
   "half_seconds_remaining" = 248,
@@ -2160,42 +2157,37 @@ input_63 <- data.frame(
   "defteam_timeouts_remaining" = 3
 )
 
-# answer was go for it
+# answer was don't go for it
 
 
-
-
-
-# Lions vs Vikings Scenario
+# Lions vs Vikings Real-Life Scenario, but with a run
 input_64 <- data.frame(
-  "yardline_100" = 99,
-  "half_seconds_remaining" = 120,
-  "game_half" = "Half1",
+  "yardline_100" = 72,
+  "half_seconds_remaining" = 248,
+  "game_half" = "Half2",
   "goal_to_go" = 0,
-  "ydstogo" = 2,
+  "ydstogo" = 1,
   "play_type" = "run",
   "shotgun" = 0,
-  "timeout" = 0,
-  "posteam_score" = 14,
+  "timeout" = 1,
+  "posteam_score" = 23,
   "defteam_score" = 21,
   "away_score" = 21,
-  "home_score" = 14,
-  "season" = 2018,
+  "home_score" = 23,
+  "season" = 2021,
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
   "down" = 4,
-  "posteam_timeouts_remaining" = 2,
-  "defteam_timeouts_remaining" = 2
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 3
 )
 
-# answer was go for it
+# answer was don't go for it
 
 
 
-
-
-# Lions vs Vikings Scenario
+# Threshold for yardline_100
 input_65 <- data.frame(
   "yardline_100" = 63,
   "half_seconds_remaining" = 120,
@@ -2220,16 +2212,13 @@ input_65 <- data.frame(
 
 # answer was go for it
 
-
-
-
-# Lions vs Vikings Scenario
+# Threshold for yardline_100
 input_66 <- data.frame(
-  "yardline_100" = 10,
+  "yardline_100" = 64,
   "half_seconds_remaining" = 120,
-  "game_half" = "Half2",
+  "game_half" = "Half1",
   "goal_to_go" = 0,
-  "ydstogo" = 3,
+  "ydstogo" = 2,
   "play_type" = "run",
   "shotgun" = 0,
   "timeout" = 0,
@@ -2246,7 +2235,7 @@ input_66 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# answer was go for it
+# answer was don't go for it
 ```
 
 ```{r}
@@ -2265,7 +2254,6 @@ Run through list of scenarios and create data frame with scenario outputs
 Note: Need to change opposing team individually within function
 ```{r}
 output <- gfi(inputs, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
-# names(output) = c('input_1', 'input_2', 'input_3')
 output <- clean_names(output)
 
 results_summary <- cbind(inputs, output)
