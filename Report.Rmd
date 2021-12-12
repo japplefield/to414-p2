@@ -1,5 +1,5 @@
 ---
-title: "Project Title"
+title: "Fourth Down Conversion Predictions"
 author: "Hip Hip Array"
 date: "12/12/2021"
 output:
@@ -22,7 +22,17 @@ knitr::opts_chunk$set(cache = TRUE)
 
 # Intro
 
-TODO
+The purpose of this analysis is to provide football coaches, players, and fans with information and insight into the appropriate decision making that goes into a 4th down. We want to provide a model that will tell coaches whether or not it is worth it to either attempt a 4th down conversion. This problem is significant and important because 4th downs are a crucial part of any football game. Correctly deciding what approach to do can change the course of the game, and this is especially important when every point matters. By maximizing the expected points and win probability that comes with each decision, our audience can better understand the game of football and make these otherwise difficult judgement calls that have historically been made on instinct.
+
+We will evaluate one choice for a given team: attempt to convert a fourth down, or do not. 
+
+*Fourth Down Expected Net Points:* The probability that the fourth down conversion will be successful, multiplied by the expected outcome of the remainder of the drive upon success, minus the probability that the fourth down conversion will not be successful times the expected outcome of the opponent’s drive starting from the spot of the turnover.
+
+```{=latex}
+$$
+p(\text{Success}) \times E(\text{Drive} | \text{Success}) - p(\overline{\text{Success}}) \times E(\text{Opponent Drive} | \overline{\text{Success}})
+$$
+```
 
 # Setup
 
@@ -46,6 +56,16 @@ future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
 str(pbp)
 ```
+
+We are using the detailed NFL Play-by-Play Data from 2010-2020 (this may be expanded into seasons pre-2010 if we either want more data, or want to test our model on additional seasons) . We initially found [this](https://www.kaggle.com/maxhorowitz/nflplaybyplay2009to2016) dataset on Kaggle. The data was scraped from NFL data by Carnegie Mellon researchers from NFL databases. The source dataset is too large to keep in the git repository so we had to use [this](https://www.nflfastr.com/) R package `nflfastR` (same data source as the Kaggle dataset) to extract data.
+
+The data has 531,515 rows and 372 variables. Variable descriptions and dataset information can be found [here](https://www.nflfastr.com/articles/field_descriptions.html). Many of the variables in the dataset include information about the play itself, after the decision to go for it was made, and thus we will not include these variables in our prediction. 
+
+With a dataset of this magnitude and complexity there are many technical issues that we have run into. To start, we had trouble finding the adequate dataset as the NFL does not provide play-by-play data explicitley. Instead, third-parties have used web-scraping to extract the data and provide it to us. In doing so we had to be careful in what dataset we selected. 
+
+After choosing a dataset we also have to understand the dataset and decide what is relevant and what variables can actually be used in our prediction. Many variables are already predictions from the variables within the same dataset and we need to ensure we are not using any of these variables in predictions.
+
+In addition, one challenge we may face is the time period we choose to use. We currently plan on analyzing NFL statistics from 2010-2020, but we could also consider all data from 2000-2020. Our current understanding is that NFL gameplay strategy has evolved since the early 2000s, and looking at data that is earlier than the most recent decade may incorporate gameplay statistics that are irrelevant and outdated to current gameplay. After initial analysis, we may take a broader look at these statistics, but our team generally may face challenges in determining at what point data becomes relevant. 
 
 ## Set up "Going For It" (GFI) Data
 ```{r}
@@ -2251,15 +2271,29 @@ outputdf <- data.frame(Reduce(rbind, output))
 
 TODO
 
+Base scenario: Detroit is the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
+
 # Results
 
 TODO
+
+We ran a bunch of scenarios changing each of these variables one at a time to see if it affects if the team should go for it or not. We found that there is a cutoff for the yards to get to the opponent’s end zone. If there are 64 or less yards, our model predicts to go for it. If there are more than 64 yards to get to the end zone, then our model predicts to not go for it. 
+
+We also found that the amount of timeouts remaining for each team did not change the fact that the Lions should go for it in the base scenario. Same with the score of the game and time remaining in either half.
+
+An interesting result from running these scenarios is that the yards left to get the first down did not affect the fact that the Lions should go for it in the base scenario.
+
+We also ran scenarios with all the same variables as the base scenario except with Detroit in a shotgun formation. The results we found were ____ (sara or mark)
 
 # Acknowledged Issues and Next Steps
 
 Taking a step back after building our initial model, we found it important to recognize the current flaws we have in our model. Since we built and trained our model solely on plays where a fourth down conversion was attempted, selection bias is present, and our training dataset was relatively small in comparison to the complete NFL Play-By-Play dataset we began with. Our training set was especially reduced since fourth down conversions are relatively unlikely in comparison to other plays. 
 
-Additionally due to the time constraints of this class project, we were not able to include other fourth down play decisions in our training dataset or decision space. These alternative play decisions would be punting the ball away, or attempting a field goal. Adding these plays would reduce our selection bias, and would expand our decision space to advise a coach on what play to call if a fourth down conversion is unlikely to be a success.
+An extension of this project would be to evaluate between three decisions: attempt to convert a fourth down, attempt to punt on a fourth down, and attempt to kick a field goal. Due to the time constraints of this class project, we were not able to include other fourth down play decisions in our training dataset or decision space. These alternative play decisions would be punting the ball away, or attempting a field goal. Adding these plays would reduce our selection bias, and would expand our decision space to advise a coach on what play to call if a fourth down conversion is unlikely to be a success. The calculations for punt and field goal decisions could be as follows:
+
+*Punt:* The expected outcome of the opponent’s drive starting from the expected destination of the punt.
+
+*Field Goal:* The probability that the kick is good multiplied by the resulting outcome (+3 points), plus the probability that the kick is no good multiplied by the expected outcome of the opponent’s drive starting from the spot of the kick.
 
 Furthermore, expanding our decision space in a future model would likely change our analysis on when a fourth down conversion attempt would be successful. Specifically, many of the scenarios in which our model would tell a team to go for the fourth down, would likely change to suggest kicking a field goal would be the most successful play. Since our current model uses expected points as a way of quantifying success, kicking a field goal would be more successful than a fourth down conversion (when a team is in range of a field goal) since it would have higher expected points. 
 
@@ -2268,3 +2302,23 @@ In general, we would prioritize expanding our model’s decision space in the ne
 # Conclusion
 
 TODO
+
+By using NFL Play-By-Play data, we have successfully built a model that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. 
+
+## Fourth Down Conversion Success
+
+Based on models above, we believe we are on track to achieving our objectives. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. Our ANN model is our most accurate however it loses interpretability which is important in the context of this project (especially for football coaches trying to make decisions in the game). I would like to improve the models by continuing to test additional predictors such as weather, current drive length and an interaction betweeen year and team. Additionally, we would like to continue testing thresholds "K" values, and neural network steps in order to continue improving our models. Finally, I would like to attempt a decision tree analysis as this would also give coaches interpretability.
+
+## Field Goal Success
+
+The models built to predict field goal success are quite accurate, but they suffer from a lack of missed field goals in the data set. The data set is very skewed. The models, especially the KNN, could benefit from overweighting missed field goals. The ANN could also benefit from a different, deeper structure.
+
+## Expected Punt Distance
+
+The linear regression model has an adjusted R-squared of 0.54. I believe this is quite accurate already. We have yet to split the data into train and test sets to better evaluate the accuracy of the model. The model could also benefit by considering touchbacks as a separate case.
+
+This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent on this project because it can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this  spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
+
+# Contributors
+
+The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), Natalie Rice, [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
