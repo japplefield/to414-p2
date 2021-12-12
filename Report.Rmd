@@ -1,0 +1,2270 @@
+---
+title: "Project Title"
+author: "Hip Hip Array"
+date: "12/12/2021"
+output:
+  html_document:
+    code_folding: hide
+    highlight: tango
+    theme: united
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+# Intro
+
+TODO
+
+# Setup
+
+## Load Packages
+```{r, cache=FALSE}
+library(C50)
+library(caret)
+library(class)
+library(janitor)
+library(kernlab)
+library(neuralnet)
+library(nflfastR)
+library(stats)
+library(tidyverse)
+```
+
+## Load Data
+
+```{r}
+future::plan("multisession")
+pbp <- load_pbp(2010:2020, file_type = "qs")
+str(pbp)
+```
+
+## Set up "Going For It" (GFI) Data
+```{r}
+# Only pull plays that are a fourth down attempt
+GFI <- pbp[!is.na(pbp$play_type), ]
+GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$field_goal_attempt == 0 & GFI$play_type != "no_play" & GFI$play_type != "qb_kneel", ]
+```
+
+## Set up GFI data for all models
+```{r}
+# Using model.matrix to convert all the factors to dummy variables
+# We are converting all of the factors into dummy variables as the input into knn has to be numeric
+
+# Include all variables for step function, exclude NA rows
+GFI_ALL <- GFI[!is.na(GFI$fourth_down_converted), ]
+
+## Randomize the rows in the data (shuffling the rows)
+set.seed(123)
+GFI_ALL <- slice(GFI_ALL, sample(1:n()))
+```
+
+
+# Variable Selection with GLM
+
+## Training
+```{r}
+GFI_GLM_ALL <- select(
+  GFI_ALL,
+  fourth_down_converted,
+  season_type,
+  week,
+  posteam_type,
+  yardline_100,
+  quarter_seconds_remaining,
+  half_seconds_remaining,
+  game_seconds_remaining,
+  game_half,
+  qtr,
+  goal_to_go,
+  ydstogo,
+  play_type,
+  shotgun,
+  no_huddle,
+  home_timeouts_remaining,
+  away_timeouts_remaining,
+  timeout,
+  posteam_timeouts_remaining,
+  defteam_timeouts_remaining,
+  posteam_score,
+  defteam_score,
+  score_differential,
+  special_teams_play,
+  fixed_drive,
+  away_score,
+  home_score,
+  location,
+  div_game,
+  roof,
+  surface,
+  home_opening_kickoff
+)
+GFI_GLM_ALL <- GFI_GLM_ALL %>% mutate_if(is.character, as.factor)
+
+GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~ n_distinct(.) > 1))
+
+train_set <- sample(1:nrow(GFI_GLM_ALL), 0.7 * nrow(GFI_GLM_ALL))
+
+# Training set
+gfi_glm_train <- GFI_GLM_ALL[train_set, ]
+gfi_glm_validation <- GFI_GLM_ALL[-train_set, ]
+
+model_glm <- glm(fourth_down_converted ~ ., data = gfi_glm_train, family = "binomial", control = list(maxit = 100))
+model_glm <- step(model_glm, direction = "backward", trace = 0)
+summary(model_glm)
+```
+
+## Predicting
+```{r}
+predict_glm <- predict(model_glm, newdata = gfi_glm_validation, type = "response")
+predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
+predict_glm_factor <- as.factor(predict_glm_factor)
+confusionMatrix(predict_glm_factor, as.factor(gfi_glm_validation$fourth_down_converted))
+```
+
+Now we will run future models on just inputs the stepwise GLM found significant.
+
+```{r}
+# Include only variables we want to use in prediction
+GFI_small <- select(
+  GFI_ALL,
+  fourth_down_converted,
+  yardline_100,
+  half_seconds_remaining,
+  game_half,
+  goal_to_go,
+  ydstogo,
+  play_type,
+  shotgun,
+  timeout,
+  posteam_score,
+  defteam_score,
+  away_score,
+  home_score
+)
+
+GFI_small <- GFI_small %>% mutate_if(is.character, as.factor)
+
+GFI_small <- GFI_small %>% select(where(~ n_distinct(.) > 1))
+
+GFI_small <- clean_names(GFI_small)
+
+# Model Matrix for ANN
+GFI_mm <- as.data.frame(model.matrix(~ . - 1, GFI_small))
+
+
+# Normalize the data
+normalize <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+# we are going to normalize everything
+# Create Labels for KNN
+GFI_norm <- as.data.frame(lapply(GFI_mm[-1], normalize))
+GFI_labels <- GFI_mm[, 1]
+```
+
+# Individual Models
+
+## GLM
+
+### Training
+```{r}
+model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial", control = list(maxit = 100))
+summary(model_glm)
+```
+
+### Predicting
+```{r}
+predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
+predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
+predict_glm_factor <- as.factor(predict_glm_factor)
+glmcm <- confusionMatrix(predict_glm_factor, as.factor(GFI_small$fourth_down_converted))
+glmcm
+```
+
+## ANN
+
+### Training
+```{r}
+model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
+plot(model_ann)
+```
+
+### Predicting
+```{r}
+predict_ann <- neuralnet::compute(model_ann, GFI_mm)
+predict_ann <- predict_ann$net.result
+predict_ann_factor <- ifelse(predict_ann < 0.5, 0, 1)
+predict_ann_factor <- as.factor(predict_ann_factor)
+
+anncm <- confusionMatrix(predict_ann_factor, as.factor(GFI_mm$fourth_down_converted))
+anncm
+```
+
+
+## KNN
+
+### Tuning the hyperparameter k
+```{r}
+
+best_kappa <- 0
+best_k <- 0
+
+train_set <- sample(1:nrow(GFI_norm), 0.7 * nrow(GFI_norm))
+
+# Training set
+gfi_knn_train <- GFI_norm[train_set, ]
+gfi_knn_validation <- GFI_norm[-train_set, ]
+
+gfi_knn_train_labels <- GFI_labels[train_set]
+gfi_knn_validation_labels <- GFI_labels[-train_set]
+
+for (i in 1:100) {
+  knn_pred <- knn(
+    train = gfi_knn_train, test = gfi_knn_validation,
+    cl = gfi_knn_train_labels, k = i
+  )
+
+  kappa <- confusionMatrix(as.factor(knn_pred), as.factor(gfi_knn_validation_labels))$overall["Kappa"]
+
+  if (kappa > best_kappa) {
+    best_k <- i
+    best_kappa <- kappa
+  }
+}
+```
+
+### Training & Predicting
+```{r}
+
+knn_pred <- knn(
+  train = GFI_norm, test = GFI_norm,
+  cl = GFI_labels, k = best_k
+)
+
+knncm <- confusionMatrix(as.factor(knn_pred), as.factor(GFI_labels))
+knncm
+```
+
+## SVM
+
+### Tuning the hyperparemeter sigma
+
+```{r}
+
+
+best_kappa <- 0
+best_sigma <- 0
+
+train_set <- sample(1:nrow(GFI_small), 0.7 * nrow(GFI_small))
+
+# Training set
+gfi_svm_train <- GFI_small[train_set, ]
+gfi_svm_validation <- GFI_small[-train_set, ]
+
+for (i in c(2:10 %o% 10^(-5:1))) {
+  model_svm <- ksvm(fourth_down_converted ~ ., data = gfi_svm_train, kernel = "rbfdot", kpar = list(sigma = i))
+  predict_svm <- predict(model_svm, gfi_svm_validation)
+  predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
+
+  kappa <- confusionMatrix(as.factor(predict_svm), as.factor(gfi_svm_validation$fourth_down_converted))$overall["Kappa"]
+
+  if (kappa > best_kappa) {
+    best_sigma <- i
+    best_kappa <- kappa
+  }
+}
+```
+
+### Training
+```{r}
+model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar = list(sigma = best_sigma))
+```
+
+### Predicting
+```{r}
+predict_svm <- predict(model_svm, GFI_small)
+predict_svm <- ifelse(predict_svm < 0.5, 0, 1)
+
+svmcm <- confusionMatrix(as.factor(predict_svm), as.factor(GFI_labels))
+svmcm
+```
+
+## Decision Tree
+
+### Training
+```{r}
+
+model_tree <- C5.0(as.factor(fourth_down_converted) ~ ., data = GFI_small)
+summary(model_tree)
+```
+
+### Predicting
+```{r}
+predict_tree <- predict(model_tree, GFI_small)
+
+treecm <- confusionMatrix(predict_tree, as.factor(GFI_labels))
+treecm
+```
+
+
+## Summary Kappas
+Kappa for each model is as follows:
+
+- Logistic Regression: `r glmcm$overall["Kappa"]`
+- KNN: `r knncm$overall["Kappa"]`
+- ANN: `r anncm$overall["Kappa"]`
+- SVM: `r svmcm$overall["Kappa"]`
+- Decision Tree: `r treecm$overall["Kappa"]`
+
+# Stacked Model
+
+## Data Frame of all Predictions
+```{r}
+predictions <- as.data.frame(GFI_labels)
+predictions$glm <- predict_glm
+predictions$knn <- knn_pred
+predictions$ann <- predict_ann
+predictions$svm <- as.numeric(predict_svm)
+predictions$tree <- predict_tree
+
+str(predictions)
+summary(predictions)
+```
+
+## Split into Train and Validation Sets
+
+```{r}
+set.seed(123)
+train_set <- sample(1:nrow(predictions), 0.7 * nrow(predictions))
+
+# Training set
+train_data <- predictions[train_set, ]
+str(train_data)
+
+val_data <- predictions[-train_set, ]
+str(val_data)
+```
+
+## Decision Tree
+```{r}
+
+set.seed(123)
+
+second_level_tree <- C5.0(as.factor(GFI_labels) ~ ., data = train_data)
+summary(second_level_tree)
+```
+
+## Validate Decision Tree
+
+```{r}
+predict_second_level <- predict(second_level_tree, val_data)
+
+plot(second_level_tree)
+
+confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
+```
+
+# Decision Predictions
+
+(Jim Harbaugh and Dan Campbell please read this part)
+
+We will now create a function that uses the trained model to determine if a team should "Go For It" on 4th Down.
+
+## Stacked Logistic Model
+First, we want a stacked model that outputs a probability, and not a binary response. We will use a logistic stacked model instead of a decision tree. KNN will not be used because it is hard to form a lightweight function.
+
+### Training
+```{r, cache=TRUE}
+stacked_glm <- glm(GFI_labels ~ . - knn, data = train_data)
+stacked_glm <- step(stacked_glm, direction = "backward")
+summary(stacked_glm)
+```
+
+As it turns out, the ann is also not that useful per the stacked glm, so it can be omitted from the function we create too.
+
+## Decision Function
+
+Now we will define the actual decision function. The function requires as input a data frame with the following fields:
+
+yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, timeout, posteam_score, defteam_score, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
+
+It requires the following models:
+
+ann_model, svm_model, glm_model, tree_model, stacked_glm
+
+```{r}
+gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
+  df$game_half <- factor(df$game_half, levels(GFI_small$game_half))
+  df$play_type <- factor(df$play_type, levels(GFI_small$play_type))
+
+  model_outs <- data.frame(
+    "glm" = predict(glm_model, newdata = df),
+    "svm" = predict(svm_model, df),
+    "tree" = predict(tree, df)
+  )
+
+  glm_logit <- predict(stacked_glm, model_outs)
+
+  logit2prob <- function(logit) {
+    odds <- exp(logit)
+    prob <- odds / (1 + odds)
+    return(prob)
+  }
+
+  prob_success <- logit2prob(glm_logit)
+
+  pos_df <- df
+  pos_df$down <- 1
+  pos_df$ydstogo <- 10
+  pos_df$yardline_100 <- pos_df$yardline_100 - pos_df$ydstogo
+
+  success <- nflfastR::calculate_expected_points(pos_df) %>%
+    dplyr::select(ep)
+
+  opp_df <- df
+  opp_df$posteam <- oppteam
+  opp_df$down <- 1
+  opp_df$ydstogo <- 10
+  opp_df$yardline_100 <- 100 - pos_df$yardline_100
+
+  failure <- nflfastR::calculate_expected_points(opp_df) %>%
+    dplyr::select(ep)
+
+  exp_net_pts <- prob_success * success$ep + (1 - prob_success) * failure$ep * -1
+
+  tab <- matrix(c(ifelse(exp_net_pts > 0, "Go For It", "Don't Go For It"), prob_success, success, failure, exp_net_pts), ncol = 5, byrow = TRUE)
+  colnames(tab) <- c("Go For It?", "Probability of Success", "Exp. Points if Success", "Exp. Points if Fail", "Exp. Net Points")
+  return(tab)
+}
+```
+
+Now that the function has been defined we will create a variety of scenarios and apply the function to them. 
+
+```{r}
+# Base input
+input_1 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# Answer was go for it
+
+
+
+# Changing yardline_100 to 50
+input_2 <- data.frame(
+  "yardline_100" = 50,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# Answer was go for it
+
+
+
+# Yardline_100 to 80
+
+input_3 <- data.frame(
+  "yardline_100" = 80,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# Answer was don't go for it
+
+
+
+# Total home score to 14 (now teams are tied with 14)
+
+input_4 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# Answer was go for it
+
+
+
+
+# Total home score to 14 (now teams are tied with 14) but further from endzone
+
+input_5 <- data.frame(
+  "yardline_100" = 50,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Total away score to 27 (away team beating home team by 7)
+
+input_6 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# Don't go for it
+
+
+
+
+# Team with possession has 1 timeout, defending team has 2
+
+input_7 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Team with possession has 3 timeouts, defending team has 2
+
+input_8 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 3,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Team with possession has 0 timeouts, defending team has 2
+
+input_9 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 0,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Team with possession has 2 timeouts, defending team has 1
+
+input_10 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 1
+)
+
+# go for it
+
+
+
+# Team with possession has 2 timeouts, defending team has 3
+
+input_11 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 3
+)
+
+# go for it
+
+
+
+# Team with possession has 2 timeouts, defending team has 0
+
+input_12 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 0
+)
+
+# go for it
+
+
+
+# Yards to go changed to 2
+
+input_13 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Yards to go changed to 7
+input_14 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 7,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# half second remaining 600 in first half
+
+input_15 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# don't go for it
+
+
+
+# seconds remaining 600 in second half
+
+input_16 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# half second remaining 120 in the first half
+
+input_17 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# Base input but with timeout = 1 (called a timeout)
+
+input_18 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+# Changing time remaining and home team losing
+
+# second half remaining 600 in second half and home team losing
+input_19 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# remaining 600 seconds in first half and home team losing
+input_20 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+# go for it
+
+
+
+# half second remaining 120 in the first half and home team losing
+input_21 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+# Changing time remaining and teams are tied
+
+# remaining 600 seconds in first half and tied
+input_22 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+# 600 seconds remaining in second half
+input_23 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+# go for it
+
+
+
+# 2 min remaining 120 in the first half
+input_24 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# go for it
+
+
+
+
+
+
+# Play begins with posession team in shotgun position
+
+# Base input with shotgun
+input_25 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in first half and home team losing, and shotgun
+input_26 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half and home team losing, and shotgun
+input_27 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half and home team losing, and shotgun
+input_28 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Changing time remaining and teams are tied
+
+# half second remaining 600 in first half, and shotgun
+input_29 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half, and shotgun
+input_30 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half, and shotgun
+input_31 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Repeat all above simulations with New England Patriots (NE)
+
+
+# Base input
+input_32 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Changing yardline_100 to 50
+
+input_33 <- data.frame(
+  "yardline_100" = 50,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Yardline_100 to 80
+
+input_33 <- data.frame(
+  "yardline_100" = 80,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Total home score to 14 (now teams are tied with 14)
+
+input_34 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+
+# Total home score to 14 (now teams are tied with 14) but further from endzone
+
+input_35 <- data.frame(
+  "yardline_100" = 50,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Total away score to 27 (away team beating home team by 7)
+
+input_36 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+
+# Team with possession has 1 timeout, defeding team has 2
+input_37 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Team with possession has 3 timeouts, defending team has 2
+input_38 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 3,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Team with possession has 0 timeouts, defending team has 2
+input_39 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 0,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Team with possession has 2 timeouts, defending team has 1
+input_40 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 1
+)
+
+
+
+# Team with possession has 2 timeouts, defending team has 3
+input_41 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 3
+)
+
+
+
+# Team with possession has 2 timeouts, defending team has 0
+
+input_42 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 0
+)
+
+
+
+# Yards to go changed to 2
+input_43 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Yards to go changed to 7
+input_44 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 7,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in first half
+input_45 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half
+input_46 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half
+input_47 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# Base input but with timeout = 1 (called a timeout)
+input_48 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Changing time remaining and home team losing
+
+# half second remaining 600 in first half and home team losing
+input_49 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half and home team losing
+input_50 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half and home team losing
+input_51 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Changing time remaining and teams are tied
+
+# half second remaining 600 in first half
+input_52 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half
+input_53 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half
+input_54 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Play begins with posession team in shotgun position
+
+# Base input with shotgun
+input_55 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in first half and home team losing, and shotgun
+input_56 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half and home team losing, and shotgun
+input_57 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half and home team losing, and shotgun
+input_58 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 27,
+  "away_score" = 27,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+# Changing time remaining and teams are tied
+
+# half second remaining 600 in first half, and shotgun
+input_59 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 600 in second half, and shotgun
+input_60 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 600,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+# half second remaining 120 in the first half, and shotgun
+input_61 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 5,
+  "play_type" = "run",
+  "shotgun" = 1,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 14,
+  "away_score" = 14,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "NE",
+  "posteam" = "NE",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+
+
+
+# original but changed yds to go to  1
+input_62 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 21,
+  "defteam_score" = 3,
+  "away_score" = 3,
+  "home_score" = 21,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 3,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# answer was go for it
+
+
+
+
+# Lions vs Vikings Scenario
+input_63 <- data.frame(
+  "yardline_100" = 72,
+  "half_seconds_remaining" = 248,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "pass",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 23,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 23,
+  "season" = 2021,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 3
+)
+
+# answer was go for it
+
+
+
+
+
+# Lions vs Vikings Scenario
+input_64 <- data.frame(
+  "yardline_100" = 99,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# answer was go for it
+
+
+
+
+
+# Lions vs Vikings Scenario
+input_65 <- data.frame(
+  "yardline_100" = 63,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half1",
+  "goal_to_go" = 0,
+  "ydstogo" = 2,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# answer was go for it
+
+
+
+
+# Lions vs Vikings Scenario
+input_66 <- data.frame(
+  "yardline_100" = 10,
+  "half_seconds_remaining" = 120,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 3,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 0,
+  "posteam_score" = 14,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 14,
+  "season" = 2018,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 2,
+  "defteam_timeouts_remaining" = 2
+)
+
+# answer was go for it
+```
+
+```{r}
+input_list <- list(
+  input_1, input_2, input_3, input_4, input_5, input_6, input_7, input_8, input_9,
+  input_10, input_11, input_12, input_13, input_14, input_15, input_16, input_17, input_18, input_19,
+  input_20, input_21, input_22, input_23, input_24, input_25, input_26, input_27, input_28, input_29,
+  input_30, input_31, input_32, input_33, input_34, input_35, input_36, input_37, input_38, input_39,
+  input_40, input_41, input_42, input_43, input_44, input_45, input_46, input_47, input_48, input_49,
+  input_50, input_51, input_52, input_53, input_54, input_55, input_56, input_57, input_58, input_59,
+  input_60, input_61, input_62, input_63, input_64, input_65, input_66
+)
+```
+
+Run through list of scenarios and create data frame with scenario outputs
+Note: Need to change opposing team individually within function
+```{r}
+output <- lapply(input_list, gfi, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
+# names(output) = c('input_1', 'input_2', 'input_3')
+outputdf <- data.frame(Reduce(rbind, output))
+```
+
+# Scenarios
+
+TODO
+
+# Results
+
+TODO
+
+# Acknowledged Issues and Next Steps
+
+Taking a step back after building our initial model, we found it important to recognize the current flaws we have in our model. Since we built and trained our model solely on plays where a fourth down conversion was attempted, selection bias is present, and our training dataset was relatively small in comparison to the complete NFL Play-By-Play dataset we began with. Our training set was especially reduced since fourth down conversions are relatively unlikely in comparison to other plays. 
+
+Additionally due to the time constraints of this class project, we were not able to include other fourth down play decisions in our training dataset or decision space. These alternative play decisions would be punting the ball away, or attempting a field goal. Adding these plays would reduce our selection bias, and would expand our decision space to advise a coach on what play to call if a fourth down conversion is unlikely to be a success.
+
+Furthermore, expanding our decision space in a future model would likely change our analysis on when a fourth down conversion attempt would be successful. Specifically, many of the scenarios in which our model would tell a team to go for the fourth down, would likely change to suggest kicking a field goal would be the most successful play. Since our current model uses expected points as a way of quantifying success, kicking a field goal would be more successful than a fourth down conversion (when a team is in range of a field goal) since it would have higher expected points. 
+
+In general, we would prioritize expanding our model’s decision space in the next steps, since this would offer more dynamic advice to coaches about what play to run. 
+
+# Conclusion
+
+TODO
