@@ -2312,7 +2312,9 @@ We also found that the amount of timeouts remaining for each team did not change
 
 An interesting result from running these scenarios is that the yards left to get the first down did not affect the fact that the Lions should go for it in the base scenario.
 
-We also ran scenarios with all the same variables as the base scenario except with Detroit in a shotgun formation. The results we found were ____ (sara or mark)
+We also ran scenarios with all the same variables as the base scenario except with Detroit in a shotgun formation. The results we found were TODO UPDATE THIS.
+
+In summary, our model generally recommends a team go for it on fourth down if they have few yards to go, unless they are very far away from the opponent's end zone. This is an artifact of our model's formula: even if the probability of making the fourth down isn't so high, if the opposing team's expected points from the spot of the turnover isn't that high either, and the possessing team's expected points from the spot of the first down is reasonably high, then the expected net points is positive and we recommend they go for it. A better way of interpreting our model's output would be according to the coach's degree of risk aversion and faith in a field goal unit. The coach should look at the Expected Net Points output by our model and decide on their own threshold based on degree of risk aversion at a point in the game. If the expected net points is low and the team is not desparate to score a touchdown, they should not go for it. If the expected net points is much less than three, the coach has faith in the kicker, and they are not desparate to score a touchdown, they should elect to kick a field goal. A more nuanced analysis like this would be more easily possible if we had also investigated field goal success, which we will discuss in the following section of this report.
 
 # Acknowledged Issues and Next Steps
 
