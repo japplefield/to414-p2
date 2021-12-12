@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 knitr::opts_chunk$set(cache = TRUE)
+# knitr::opts_chunk$set(cache.lazy = FALSE)
 ```
 
 # Intro
@@ -2321,4 +2322,4 @@ This analysis is important to coaches, players, and fans for many reasons. Money
 
 # Contributors
 
-The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), Natalie Rice, [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
+The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), [Natalie Rice](https://github.com/natrice123), [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
