@@ -53,7 +53,7 @@ We will predict the probability of a successful conversion by using logistic reg
 
 With a dataset of this magnitude and complexity there are many technical issues that we have run into. To start, we had trouble finding the adequate dataset as the NFL does not provide play-by-play data explicitly. Instead, third-parties have used web-scraping to extract the data and provide it to us. In doing so we had to be careful in what dataset we selected.
 
-After choosing a dataset we also have to understand the dataset and decide what is relevant and what variables can actually be used in our prediction. Many variables are already predictions from the variables within the same dataset and we need to ensure we are not using any of these variables in predictions. THere is also many “post-play” information variables that we cannot use in our prediction. We only want to use variables that are known and easily accessible for a coach to make a decision before the play.
+After choosing a dataset we also have to understand the dataset and decide what is relevant and what variables can actually be used in our prediction. Many variables are already predictions from the variables within the same dataset and we need to ensure we are not using any of these variables in predictions. There is also many “post-play” information variables that we cannot use in our prediction. We only want to use variables that are known and easily accessible for a coach to make a decision before the play.
 
 In addition, one challenge we may face is the time period we choose to use. We currently plan on analyzing NFL statistics from 2010-2020, but we could also consider all data from 2000-2020. Our current understanding is that NFL gameplay strategy has evolved since the early 2000s, and looking at data that is earlier than the most recent decade may incorporate gameplay statistics that are irrelevant and outdated to current gameplay. After this initial analysis, we ideally would like to take a broader look at these statistics.
 
@@ -75,6 +75,8 @@ library(rmarkdown)
 
 ## Load Data
 
+We will load the full 2010-2020 play-by-play data below:
+
 <input type=button class=hideshow></input>
 
 ```{r}
@@ -82,13 +84,6 @@ future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
 str(pbp)
 ```
-
-
-With a dataset of this magnitude and complexity there are many technical issues that we have run into. To start, we had trouble finding the adequate dataset as the NFL does not provide play-by-play data explicitly. Instead, third-parties have used web-scraping to extract the data and provide it to us. In doing so we had to be careful in what dataset we selected. 
-
-After choosing a dataset we also have to understand the dataset and decide what is relevant and what variables can actually be used in our prediction. Many variables are already predictions from the variables within the same dataset and we need to ensure we are not using any of these variables in predictions.
-
-In addition, one challenge we may face is the time period we choose to use. We currently plan on analyzing NFL statistics from 2010-2020, but we could also consider all data from 2000-2020. Our current understanding is that NFL gameplay strategy has evolved since the early 2000s, and looking at data that is earlier than the most recent decade may incorporate gameplay statistics that are irrelevant and outdated to current gameplay. After initial analysis, we may take a broader look at these statistics, but our team generally may face challenges in determining at what point data becomes relevant. 
 
 ## Set up "Going For It" (GFI) Data
 
