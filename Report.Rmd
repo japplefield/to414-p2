@@ -590,7 +590,7 @@ input_1 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -612,7 +612,7 @@ input_2 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -634,7 +634,7 @@ input_3 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -656,7 +656,7 @@ input_4 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -678,7 +678,7 @@ input_5 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -700,7 +700,7 @@ input_6 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -722,7 +722,7 @@ input_7 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 1,
   "defteam_timeouts_remaining" = 2
 )
@@ -744,7 +744,7 @@ input_8 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 3,
   "defteam_timeouts_remaining" = 2
 )
@@ -766,7 +766,7 @@ input_9 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 0,
   "defteam_timeouts_remaining" = 2
 )
@@ -788,7 +788,7 @@ input_10 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 1
 )
@@ -810,7 +810,7 @@ input_11 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 3
 )
@@ -832,7 +832,7 @@ input_12 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 0
 )
@@ -854,7 +854,7 @@ input_13 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -876,7 +876,7 @@ input_14 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -898,7 +898,7 @@ input_15 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -920,7 +920,7 @@ input_16 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -942,7 +942,7 @@ input_17 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -964,7 +964,7 @@ input_18 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -986,7 +986,7 @@ input_19 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1008,7 +1008,7 @@ input_20 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1030,7 +1030,7 @@ input_21 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1052,7 +1052,7 @@ input_22 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1074,7 +1074,7 @@ input_23 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1096,7 +1096,7 @@ input_24 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1118,7 +1118,7 @@ input_25 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1140,7 +1140,7 @@ input_26 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1162,7 +1162,7 @@ input_27 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1184,7 +1184,7 @@ input_28 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1206,7 +1206,7 @@ input_29 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1228,7 +1228,7 @@ input_30 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1250,7 +1250,7 @@ input_31 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1272,7 +1272,7 @@ input_32 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1294,7 +1294,7 @@ input_33 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1316,7 +1316,7 @@ input_33 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1338,7 +1338,7 @@ input_34 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1360,7 +1360,7 @@ input_35 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1382,7 +1382,7 @@ input_36 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1404,7 +1404,7 @@ input_37 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 1,
   "defteam_timeouts_remaining" = 2
 )
@@ -1426,7 +1426,7 @@ input_38 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 3,
   "defteam_timeouts_remaining" = 2
 )
@@ -1448,7 +1448,7 @@ input_39 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 0,
   "defteam_timeouts_remaining" = 2
 )
@@ -1470,7 +1470,7 @@ input_40 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 1
 )
@@ -1492,7 +1492,7 @@ input_41 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 3
 )
@@ -1514,7 +1514,7 @@ input_42 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 0
 )
@@ -1536,7 +1536,7 @@ input_43 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1558,7 +1558,7 @@ input_44 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1580,7 +1580,7 @@ input_45 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1602,7 +1602,7 @@ input_46 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1624,7 +1624,7 @@ input_47 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1646,7 +1646,7 @@ input_48 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1668,7 +1668,7 @@ input_49 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1690,7 +1690,7 @@ input_50 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1712,7 +1712,7 @@ input_51 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1734,7 +1734,7 @@ input_52 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1756,7 +1756,7 @@ input_53 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1778,7 +1778,7 @@ input_54 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1800,7 +1800,7 @@ input_55 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1822,7 +1822,7 @@ input_56 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1844,7 +1844,7 @@ input_57 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1866,7 +1866,7 @@ input_58 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1888,7 +1888,7 @@ input_59 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1910,7 +1910,7 @@ input_60 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1932,7 +1932,7 @@ input_61 <- data.frame(
   "home_team" = "NE",
   "posteam" = "NE",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -1954,7 +1954,7 @@ input_62 <- data.frame(
   "home_team" = "DET",
   "posteam" = "DET",
   "roof" = "dome",
-  "down" = 3,
+  "down" = 4,
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
@@ -2110,12 +2110,6 @@ paged_table(dont_go_for_it)
 
 ## Summary
 
-We found that there is a cutoff for the yards to get to the opponent’s end zone. If there are 64 or less yards, our model predicts to go for it. If there are more than 64 yards to get to the end zone, then our model predicts to not go for it. 
-
-We also found that the amount of timeouts remaining for each team did not change the fact that the Lions should go for it in the base scenario. Same with the score of the game and time remaining in either half.
-
-An interesting result from running these scenarios is that the yards left to get the first down did not affect the fact that the Lions should go for it in the base scenario.
-
 In summary, our model generally recommends a team go for it on fourth down if they have few yards to go, unless they are very far away from the opponent's end zone. This is an artifact of our model's formula: even if the probability of making the fourth down isn't so high, if the opposing team's expected points from the spot of the turnover isn't that high either, and the possessing team's expected points from the spot of the first down is reasonably high, then the expected net points is positive and we recommend they go for it. A better way of interpreting our model's output would be according to the coach's degree of risk aversion and faith in a field goal unit. The coach should look at the Expected Net Points output by our model and decide on their own threshold based on degree of risk aversion at a point in the game. If the expected net points is low and the team is not desparate to score a touchdown, they should not go for it. If the expected net points is much less than three, the coach has faith in the kicker, and they are not desparate to score a touchdown, they should elect to kick a field goal. A more nuanced analysis like this would be more easily possible if we had also investigated field goal success, which we will discuss below.
 
 ## Scenarios of Interest
@@ -2125,7 +2119,7 @@ interesting_scenarios <- results_summary[65:66, ]
 paged_table(interesting_scenarios)
 ```
 
-In addition to all of the above scenarios we want to highlight four scenarios in particular. In the `input_65` and `input_66` we input the exact scenario that Coach Dan Campbell and the lions were facing last week against the Vikings. In these scenarios we wanted to examine what our model would’ve told Dan Campbell to do if he were to run the ball (`input_65`) or pass the ball (`input_66`). In both scenarios our model suggested to not go for it. In particular, when passing the ball in this scenario (this is actually what happened), we see a probability of success of 58%, with an expected net points of -0.33. This is mainly driven by the expected points for the opposing team upon failure of 3.29. This is mainly because they were so far backed up that a field goal is very likely no matter what the vikings did on their drive. Additionally, if he were to pass the ball our model would still suggest not to go for it and it would have a probability of success of 61% and an expected net points of -0.19. Thus, even by running the ball we would still advise against going for it. 
+In addition to all of the above scenarios we want to highlight four scenarios in particular. In the `input_65` and `input_66` we input the exact scenario that Coach Dan Campbell and the lions were facing last week against the Vikings. In these scenarios we wanted to examine what our model would’ve told Dan Campbell to do if he were to run the ball (`input_65`) or pass the ball (`input_66`). In both scenarios our model suggested to not go for it. In particular, when passing the ball in this scenario (this is actually what happened), we see a probability of success of 58%, with an expected net points of -0.33. This is mainly driven by the expected points for the opposing team upon failure of 3.29. This is mainly because they were so far backed up that a field goal is very likely no matter what the vikings did on their drive. Additionally, if he were to run the ball our model would still suggest not to go for it and it would have a probability of success of 61% and an expected net points of -0.19. Thus, even by running the ball we would still advise against going for it. 
 
 ```{r, cache=FALSE}
 interesting_scenarios_2 <- results_summary[63:64, ]
