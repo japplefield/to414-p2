@@ -365,7 +365,8 @@ treecm
 ```
 
 
-## Summary Kappas
+## Individual Model Performance
+
 Kappa for each model is as follows:
 
 - Logistic Regression: `r glmcm$overall["Kappa"]`
@@ -373,6 +374,9 @@ Kappa for each model is as follows:
 - ANN: `r anncm$overall["Kappa"]`
 - SVM: `r svmcm$overall["Kappa"]`
 - Decision Tree: `r treecm$overall["Kappa"]`
+
+All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. The most accurate model is the SVM, with Kappa of `r svmcm$overall["Kappa"]` and Accuracy of `r svmcm$overall["Accuracy"]`. One difficulty in predicting fourth down conversion success will inevitably be the capabilities of individual players on both teams, which our model has no mechanism to incorporate, so we believe given the limited data this is quite accurate.
+
 
 # Stacked Model
 
@@ -503,7 +507,7 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
 
 Now that the function has been defined we will create a variety of scenarios and apply the function to them. 
 
-```{r}
+```{r, cache=FALSE}
 # Base input
 input_1 <- data.frame(
   "yardline_100" = 10,
@@ -2269,7 +2273,7 @@ input_66 <- data.frame(
 # answer was don't go for it
 ```
 
-```{r}
+```{r, cache=FALSE}
 inputs <- rbind(
   input_1, input_2, input_3, input_4, input_5, input_6, input_7, input_8, input_9,
   input_10, input_11, input_12, input_13, input_14, input_15, input_16, input_17, input_18, input_19,
@@ -2284,7 +2288,7 @@ inputs <- rbind(
 Run through list of scenarios and create data frame with scenario outputs
 Note: Need to change opposing team individually within function
 
-```{r}
+```{r, cache=FALSE}
 output <- gfi(inputs, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
 output <- clean_names(output)
 
@@ -2304,47 +2308,49 @@ dont_go_for_it <- results_summary %>% filter(go_for_it == "Don't Go For It")
 summary(dont_go_for_it)
 ```
 
-# Scenarios
+## Scenarios
 
-TODO
+In addition to running a model for accuracy, we wanted to see what our model would predict in a variety of scenarios. We created a base scenario where the Detroit Lions are the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
 
-Base scenario: Detroit is the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
+## Results
 
-# Results
+### All Results
 
-## All Results
+We ran our `gfi` function on all of the scenarios. The following table illustrates all scenarios we ran and the outputs:
 
-The following table illustrates all scenarios we ran and the outputs:
-
-```{r}
+```{r, cache=FALSE}
 paged_table(results_summary)
 ```
 
-## Go For It
+### Go For It
 
 The following table illustrates the scenarios our model recommends attempting a fourth down conversion.
 
-```{r}
+```{r, cache=FALSE}
 paged_table(go_for_it)
 ```
 
-## Don't Go For It
+### Don't Go For It
 
 The following table illustrates the scenarios our model recommends **not** attempting a fourth down conversion.
 
-```{r}
+```{r, cache=FALSE}
 paged_table(dont_go_for_it)
 ```
 
-We ran a bunch of scenarios changing each of these variables one at a time to see if it affects if the team should go for it or not. We found that there is a cutoff for the yards to get to the opponent’s end zone. If there are 64 or less yards, our model predicts to go for it. If there are more than 64 yards to get to the end zone, then our model predicts to not go for it. 
+## Summary
+
+We found that there is a cutoff for the yards to get to the opponent’s end zone. If there are 64 or less yards, our model predicts to go for it. If there are more than 64 yards to get to the end zone, then our model predicts to not go for it. 
 
 We also found that the amount of timeouts remaining for each team did not change the fact that the Lions should go for it in the base scenario. Same with the score of the game and time remaining in either half.
 
 An interesting result from running these scenarios is that the yards left to get the first down did not affect the fact that the Lions should go for it in the base scenario.
 
-We also ran scenarios with all the same variables as the base scenario except with Detroit in a shotgun formation. The results we found were TODO UPDATE THIS.
+In summary, our model generally recommends a team go for it on fourth down if they have few yards to go, unless they are very far away from the opponent's end zone. This is an artifact of our model's formula: even if the probability of making the fourth down isn't so high, if the opposing team's expected points from the spot of the turnover isn't that high either, and the possessing team's expected points from the spot of the first down is reasonably high, then the expected net points is positive and we recommend they go for it. A better way of interpreting our model's output would be according to the coach's degree of risk aversion and faith in a field goal unit. The coach should look at the Expected Net Points output by our model and decide on their own threshold based on degree of risk aversion at a point in the game. If the expected net points is low and the team is not desparate to score a touchdown, they should not go for it. If the expected net points is much less than three, the coach has faith in the kicker, and they are not desparate to score a touchdown, they should elect to kick a field goal. A more nuanced analysis like this would be more easily possible if we had also investigated field goal success, which we will discuss below.
 
-In summary, our model generally recommends a team go for it on fourth down if they have few yards to go, unless they are very far away from the opponent's end zone. This is an artifact of our model's formula: even if the probability of making the fourth down isn't so high, if the opposing team's expected points from the spot of the turnover isn't that high either, and the possessing team's expected points from the spot of the first down is reasonably high, then the expected net points is positive and we recommend they go for it. A better way of interpreting our model's output would be according to the coach's degree of risk aversion and faith in a field goal unit. The coach should look at the Expected Net Points output by our model and decide on their own threshold based on degree of risk aversion at a point in the game. If the expected net points is low and the team is not desparate to score a touchdown, they should not go for it. If the expected net points is much less than three, the coach has faith in the kicker, and they are not desparate to score a touchdown, they should elect to kick a field goal. A more nuanced analysis like this would be more easily possible if we had also investigated field goal success, which we will discuss in the following section of this report.
+## Scenarios of Interest
+
+TODO Mark Comment on specific scenarios
 
 # Acknowledged Issues and Next Steps
 
@@ -2366,7 +2372,7 @@ TODO
 
 By using NFL Play-By-Play data, we have successfully built a model that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. We believe the function we've created is incredibly useful for coaches because it is a simple way to conduct an on-the-fly analysis of the decision whether to attempt a fourth down conversion or not. 
 
-The model is not terribly accurate, with a kappa of only around 0.45, mostly due to the selection bias we've discussed above. Furthermore, the model has a weakness because it does not account for field goal outcomes when recommending a fourth down conversion with positive but fewer than 3 expected net points. All of the models are reasonably accurate and provide valuable insight with varying levels of interpretability. The most accurate model is TODO
+The model is not terribly accurate, with a kappa of only around 0.45, mostly due to the selection bias we've discussed above. Furthermore, the model has a weakness because it does not account for field goal outcomes when recommending a fourth down conversion with positive but fewer than 3 expected net points. 
 
 This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent to further refine these models because this project can help football decision makers appropriately determine the best course of action which could then lead to winning the game.
 
