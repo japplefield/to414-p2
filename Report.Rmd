@@ -29,9 +29,6 @@ The purpose of this analysis is to provide football coaches, players, and fans w
 
 For example, on Sunday, December 5 Head Coach of the Detroit Lions Dan Campbell decided to go for it on 4th and 1 on his own 28 yard line at a pivotal moment of the game. His decision ended up being costly. We want to be able to input pre-snap information that will give us valuable insight into what is the correct decision.
 
-The purpose of this analysis is to provide football coaches, players, and fans with information and insight into the appropriate decision making that goes into a 4th down. We want to provide a model that will tell coaches whether or not it is worth it to either attempt a 4th down conversion. This problem is significant and important because 4th downs are a crucial part of any football game. Correctly deciding what approach to do can change the course of the game, and this is especially important when every point matters. By maximizing the expected points and win probability that comes with each decision, our audience can better understand the game of football and make these otherwise difficult judgement calls that have historically been made on instinct.
-
-
 ## Dataset Information
 
 ### Data Summary
@@ -60,10 +57,6 @@ After choosing a dataset we also have to understand the dataset and decide what 
 
 In addition, one challenge we may face is the time period we choose to use. We currently plan on analyzing NFL statistics from 2010-2020, but we could also consider all data from 2000-2020. Our current understanding is that NFL gameplay strategy has evolved since the early 2000s, and looking at data that is earlier than the most recent decade may incorporate gameplay statistics that are irrelevant and outdated to current gameplay. After this initial analysis, we ideally would like to take a broader look at these statistics.
 
-## Why This is Important
-
-This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent on this project because it can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
-
 # Setup
 
 ## Load Packages
@@ -82,6 +75,8 @@ library(rmarkdown)
 
 ## Load Data
 
+<input type=button class=hideshow></input>
+
 ```{r}
 future::plan("multisession")
 pbp <- load_pbp(2010:2020, file_type = "qs")
@@ -96,13 +91,14 @@ After choosing a dataset we also have to understand the dataset and decide what 
 In addition, one challenge we may face is the time period we choose to use. We currently plan on analyzing NFL statistics from 2010-2020, but we could also consider all data from 2000-2020. Our current understanding is that NFL gameplay strategy has evolved since the early 2000s, and looking at data that is earlier than the most recent decade may incorporate gameplay statistics that are irrelevant and outdated to current gameplay. After initial analysis, we may take a broader look at these statistics, but our team generally may face challenges in determining at what point data becomes relevant. 
 
 ## Set up "Going For It" (GFI) Data
+
+We are filtering the full play-by-play data from 2010-2020 to only include plays that are fourth down attempts. 
 ```{r}
 # Only pull plays that are a fourth down attempt
 GFI <- pbp[!is.na(pbp$play_type), ]
 GFI <- GFI[!is.na(GFI$play_id) & GFI$down == 4 & GFI$punt_attempt == 0 & GFI$field_goal_attempt == 0 & GFI$play_type != "no_play" & GFI$play_type != "qb_kneel", ]
 ```
 
-## Set up GFI data for all models
 ```{r}
 # Using model.matrix to convert all the factors to dummy variables
 # We are converting all of the factors into dummy variables as the input into knn has to be numeric
@@ -118,7 +114,14 @@ GFI_ALL <- slice(GFI_ALL, sample(1:n()))
 
 # Variable Selection with GLM
 
+In order to expedite training our models, we want to pick only variables that may be significant. We decided to use backwards stepwise logistic regression to identify significant variables.
+
 ## Training
+
+First we filtered the full play by play data to only include "pre-snap" data, or data that is known before a play starts, since this is the only data we should take into account when predicting if a fourth down conversion will be succesful. 
+
+<input type=button class=hideshow></input>
+
 ```{r}
 GFI_GLM_ALL <- select(
   GFI_ALL,
@@ -161,6 +164,7 @@ GFI_GLM_ALL <- GFI_GLM_ALL %>% select(where(~ n_distinct(.) > 1))
 
 train_set <- sample(1:nrow(GFI_GLM_ALL), 0.7 * nrow(GFI_GLM_ALL))
 
+
 # Training set
 gfi_glm_train <- GFI_GLM_ALL[train_set, ]
 gfi_glm_validation <- GFI_GLM_ALL[-train_set, ]
@@ -171,6 +175,11 @@ summary(model_glm)
 ```
 
 ## Predicting
+
+In the process of selecting these variables, we predicted fourth down conversion success for a validation set to use as a baseline for future predictive models.
+
+<input type=button class=hideshow></input>
+
 ```{r}
 predict_glm <- predict(model_glm, newdata = gfi_glm_validation, type = "response")
 predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
@@ -222,15 +231,27 @@ GFI_labels <- GFI_mm[, 1]
 
 # Individual Models
 
-## GLM
+We will now build the following models to predict fourth down conversion success:
+
+- Logistic Regression
+- Artificial Neural Network
+- k-Nearest Neighbors
+- Support Vector Machine
+- Decision Tree
+
+## Logistic Regresion
 
 ### Training
+
+<input type=button class=hideshow></input>
 ```{r}
 model_glm <- glm(fourth_down_converted ~ ., data = GFI_small, family = "binomial", control = list(maxit = 100))
 summary(model_glm)
 ```
 
 ### Predicting
+
+<input type=button class=hideshow></input>
 ```{r}
 predict_glm <- predict(model_glm, newdata = GFI_small, type = "response")
 predict_glm_factor <- ifelse(predict_glm < 0.5, 0, 1)
@@ -242,12 +263,20 @@ glmcm
 ## ANN
 
 ### Training
+
+We built an ANN with one hidden layer with 3 nodes. Given a more powerful neural network package we would have built a deeper network, but the `neuralnet` package takes too long to train. 
+
+<input type=button class=hideshow></input>
 ```{r}
 model_ann <- neuralnet(fourth_down_converted ~ ., data = GFI_mm, stepmax = 1000000, hidden = 3)
 plot(model_ann)
 ```
 
+
 ### Predicting
+
+<input type=button class=hideshow></input>
+
 ```{r}
 predict_ann <- neuralnet::compute(model_ann, GFI_mm)
 predict_ann <- predict_ann$net.result
@@ -262,6 +291,11 @@ anncm
 ## KNN
 
 ### Tuning the hyperparameter k
+
+We wrote a brief for-loop to tune the hyperparameter k for the k-nearest neighbors model. We chose Kappa as the decision metric we were optimizing for.
+
+<input type=button class=hideshow></input>
+
 ```{r}
 
 best_kappa <- 0
@@ -292,6 +326,11 @@ for (i in 1:100) {
 ```
 
 ### Training & Predicting
+
+Once we determined the k hyperparameter that maximizes Kappa, we trained our kNN model with that value of k and predicted the data.
+
+<input type=button class=hideshow></input>
+
 ```{r}
 
 knn_pred <- knn(
@@ -307,9 +346,11 @@ knncm
 
 ### Tuning the hyperparemeter sigma
 
+We wrote a brief for-loop to tune the hyperparameter sigma for the SVM model. We chose Kappa as the decision metric we were optimizing for.
+
+<input type=button class=hideshow></input>
+
 ```{r}
-
-
 best_kappa <- 0
 best_sigma <- 0
 
@@ -334,6 +375,11 @@ for (i in c(2:10 %o% 10^(-5:1))) {
 ```
 
 ### Training
+
+Once we determined the sigma hyperparameter that maximizes Kappa, we trained our SVM and predicted the data.
+
+<input type=button class=hideshow></input>
+
 ```{r}
 model_svm <- ksvm(fourth_down_converted ~ ., data = GFI_small, kernel = "rbfdot", kpar = list(sigma = best_sigma))
 ```
@@ -349,7 +395,11 @@ svmcm
 
 ## Decision Tree
 
+
 ### Training
+
+<input type=button class=hideshow></input>
+
 ```{r}
 
 model_tree <- C5.0(as.factor(fourth_down_converted) ~ ., data = GFI_small)
@@ -379,6 +429,8 @@ All of the models are reasonably accurate and provide valuable insight with vary
 
 
 # Stacked Model
+
+We will now combine each of the five individual models' predictions into a single data frame and use that to train a second level decision tree.
 
 ## Data Frame of all Predictions
 ```{r}
@@ -418,13 +470,18 @@ summary(second_level_tree)
 
 ## Validate Decision Tree
 
+<input type=button class=hideshow></input>
+
 ```{r}
 predict_second_level <- predict(second_level_tree, val_data)
 
 plot(second_level_tree)
 
-confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
+second_level_cm <- confusionMatrix(predict_second_level, as.factor(val_data$GFI_labels))
+second_level_cm
 ```
+
+As illustrated in the confusion matrix above, our second-level Stacked Model only branches on the SVM's prediction. This could be due to limited information gain by any of the other models. The second-level model has an accuracy of `r second_level_cm$overall["Accuracy"]` and a Kappa of `r second_level_cm$overall["Kappa"]`, which is the same performance as the SVM. 
 
 # Decision Predictions
 
@@ -436,23 +493,33 @@ We will now create a function that uses the trained model to determine if a team
 First, we want a stacked model that outputs a probability, and not a binary response. We will use a logistic stacked model instead of a decision tree. KNN will not be used because it is hard to form a lightweight function.
 
 ### Training
+
+We will train our logistic regression model on the data output by our ANN, decision tree, logistic regression, and SVM models from before. We will use backward stepwise logistic regression to train.
+
 ```{r, cache=TRUE}
 stacked_glm <- glm(GFI_labels ~ . - knn, data = train_data)
 stacked_glm <- step(stacked_glm, direction = "backward")
 summary(stacked_glm)
 ```
 
-As it turns out, the ann is also not that useful per the stacked glm, so it can be omitted from the function we create too.
+According to the stepwise training, the ann is also not that useful, so it can be omitted from the function we create too.
 
 ## Decision Function
 
 Now we will define the actual decision function. The function requires as input a data frame with the following fields:
 
-yardline_100, half_seconds_remaining, game_half, goal_to_go, ydstogo, play_type, shotgun, timeout, posteam_score, defteam_score, away_score, home_score, season, home_team, posteam, roof, down, posteam_timeouts_remaining, defteam_timeouts_remaining
+`yardline_100`, `half_seconds_remaining`, `game_half`, `goal_to_go`, `ydstogo`, `play_type`, `shotgun`, `timeout`, `posteam_score`, `defteam_score`, `away_score`, `home_score`, `season`, `home_team`, `posteam`, `roof`, `down`, `posteam_timeouts_remaining`, `defteam_timeouts_remaining`
 
-It requires the following models:
+It requires the following models passed in as inputs:
 
-ann_model, svm_model, glm_model, tree_model, stacked_glm
+- SVM (`svm_model`)
+- First-Level Logistic Regression (`glm_model`)
+- Decision Tree (`tree_model`)
+- Second-Level Logistic Regression (`stacked_glm`)
+
+The function also takes a string `oppteam`, the abbreviation of the opposing team. 
+
+The function is defined below:
 
 ```{r}
 gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
@@ -505,10 +572,12 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
 }
 ```
 
-Now that the function has been defined we will create a variety of scenarios and apply the function to them. 
+## Scenarios
+
+Now that the function has been defined we will create a variety of scenarios and apply the function to them. We created a base scenario where the Detroit Lions are the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
+
 
 ```{r, cache=FALSE}
-# Base input
 input_1 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -531,11 +600,6 @@ input_1 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# Answer was go for it
-
-
-
-# Changing yardline_100 to 50
 input_2 <- data.frame(
   "yardline_100" = 50,
   "half_seconds_remaining" = 120,
@@ -557,12 +621,6 @@ input_2 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-# Answer was go for it
-
-
-
-# Yardline_100 to 80
 
 input_3 <- data.frame(
   "yardline_100" = 80,
@@ -586,12 +644,6 @@ input_3 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# Answer was don't go for it
-
-
-
-# Total home score to 14 (now teams are tied with 14)
-
 input_4 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -613,13 +665,6 @@ input_4 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-# Answer was go for it
-
-
-
-
-# Total home score to 14 (now teams are tied with 14) but further from endzone
 
 input_5 <- data.frame(
   "yardline_100" = 50,
@@ -643,12 +688,6 @@ input_5 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# Total away score to 27 (away team beating home team by 7)
-
 input_6 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -670,13 +709,6 @@ input_6 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-# Don't go for it
-
-
-
-
-# Team with possession has 1 timeout, defending team has 2
 
 input_7 <- data.frame(
   "yardline_100" = 10,
@@ -700,12 +732,6 @@ input_7 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# Team with possession has 3 timeouts, defending team has 2
-
 input_8 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -727,12 +753,6 @@ input_8 <- data.frame(
   "posteam_timeouts_remaining" = 3,
   "defteam_timeouts_remaining" = 2
 )
-
-# go for it
-
-
-
-# Team with possession has 0 timeouts, defending team has 2
 
 input_9 <- data.frame(
   "yardline_100" = 10,
@@ -756,12 +776,6 @@ input_9 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# Team with possession has 2 timeouts, defending team has 1
-
 input_10 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -783,12 +797,6 @@ input_10 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 1
 )
-
-# go for it
-
-
-
-# Team with possession has 2 timeouts, defending team has 3
 
 input_11 <- data.frame(
   "yardline_100" = 10,
@@ -812,12 +820,6 @@ input_11 <- data.frame(
   "defteam_timeouts_remaining" = 3
 )
 
-# go for it
-
-
-
-# Team with possession has 2 timeouts, defending team has 0
-
 input_12 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -839,12 +841,6 @@ input_12 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 0
 )
-
-# go for it
-
-
-
-# Yards to go changed to 2
 
 input_13 <- data.frame(
   "yardline_100" = 10,
@@ -868,11 +864,6 @@ input_13 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# Yards to go changed to 7
 input_14 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -894,12 +885,6 @@ input_14 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-# go for it
-
-
-
-# half second remaining 600 in first half
 
 input_15 <- data.frame(
   "yardline_100" = 10,
@@ -923,12 +908,6 @@ input_15 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# don't go for it
-
-
-
-# seconds remaining 600 in second half
-
 input_16 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -950,12 +929,6 @@ input_16 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-# go for it
-
-
-
-# half second remaining 120 in the first half
 
 input_17 <- data.frame(
   "yardline_100" = 10,
@@ -979,12 +952,6 @@ input_17 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# Base input but with timeout = 1 (called a timeout)
-
 input_18 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1007,12 +974,6 @@ input_18 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-# Changing time remaining and home team losing
-
-# second half remaining 600 in second half and home team losing
 input_19 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1035,11 +996,6 @@ input_19 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# remaining 600 seconds in first half and home team losing
 input_20 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1061,11 +1017,7 @@ input_20 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-# go for it
 
-
-
-# half second remaining 120 in the first half and home team losing
 input_21 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1088,12 +1040,6 @@ input_21 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-# Changing time remaining and teams are tied
-
-# remaining 600 seconds in first half and tied
 input_22 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1116,11 +1062,6 @@ input_22 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-# 600 seconds remaining in second half
 input_23 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1142,11 +1083,7 @@ input_23 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-# go for it
 
-
-
-# 2 min remaining 120 in the first half
 input_24 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1169,16 +1106,6 @@ input_24 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# go for it
-
-
-
-
-
-
-# Play begins with posession team in shotgun position
-
-# Base input with shotgun
 input_25 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1201,9 +1128,6 @@ input_25 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in first half and home team losing, and shotgun
 input_26 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1226,9 +1150,6 @@ input_26 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half and home team losing, and shotgun
 input_27 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1251,9 +1172,6 @@ input_27 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half and home team losing, and shotgun
 input_28 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1276,10 +1194,6 @@ input_28 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Changing time remaining and teams are tied
-
-# half second remaining 600 in first half, and shotgun
 input_29 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1302,9 +1216,6 @@ input_29 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half, and shotgun
 input_30 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1327,9 +1238,6 @@ input_30 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half, and shotgun
 input_31 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1352,11 +1260,6 @@ input_31 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Repeat all above simulations with New England Patriots (NE)
-
-
-# Base input
 input_32 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1379,10 +1282,6 @@ input_32 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Changing yardline_100 to 50
-
 input_33 <- data.frame(
   "yardline_100" = 50,
   "half_seconds_remaining" = 120,
@@ -1404,10 +1303,6 @@ input_33 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-
-
-# Yardline_100 to 80
 
 input_33 <- data.frame(
   "yardline_100" = 80,
@@ -1431,10 +1326,6 @@ input_33 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# Answer was don't go for it
-
-# Total home score to 14 (now teams are tied with 14)
-
 input_34 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1456,11 +1347,6 @@ input_34 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 2
 )
-
-
-
-
-# Total home score to 14 (now teams are tied with 14) but further from endzone
 
 input_35 <- data.frame(
   "yardline_100" = 50,
@@ -1484,10 +1370,6 @@ input_35 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Total away score to 27 (away team beating home team by 7)
-
 input_36 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1510,10 +1392,6 @@ input_36 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-
-# Team with possession has 1 timeout, defeding team has 2
 input_37 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1536,9 +1414,6 @@ input_37 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Team with possession has 3 timeouts, defending team has 2
 input_38 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1561,9 +1436,6 @@ input_38 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Team with possession has 0 timeouts, defending team has 2
 input_39 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1586,9 +1458,6 @@ input_39 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Team with possession has 2 timeouts, defending team has 1
 input_40 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1611,9 +1480,6 @@ input_40 <- data.frame(
   "defteam_timeouts_remaining" = 1
 )
 
-
-
-# Team with possession has 2 timeouts, defending team has 3
 input_41 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1635,10 +1501,6 @@ input_41 <- data.frame(
   "posteam_timeouts_remaining" = 2,
   "defteam_timeouts_remaining" = 3
 )
-
-
-
-# Team with possession has 2 timeouts, defending team has 0
 
 input_42 <- data.frame(
   "yardline_100" = 10,
@@ -1662,9 +1524,6 @@ input_42 <- data.frame(
   "defteam_timeouts_remaining" = 0
 )
 
-
-
-# Yards to go changed to 2
 input_43 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1687,9 +1546,6 @@ input_43 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Yards to go changed to 7
 input_44 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1712,9 +1568,6 @@ input_44 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in first half
 input_45 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1737,9 +1590,6 @@ input_45 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half
 input_46 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1762,9 +1612,6 @@ input_46 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half
 input_47 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1787,9 +1634,6 @@ input_47 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# Base input but with timeout = 1 (called a timeout)
 input_48 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1812,10 +1656,6 @@ input_48 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Changing time remaining and home team losing
-
-# half second remaining 600 in first half and home team losing
 input_49 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1838,9 +1678,6 @@ input_49 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half and home team losing
 input_50 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1863,9 +1700,6 @@ input_50 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half and home team losing
 input_51 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1888,10 +1722,6 @@ input_51 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Changing time remaining and teams are tied
-
-# half second remaining 600 in first half
 input_52 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1914,9 +1744,6 @@ input_52 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half
 input_53 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -1939,9 +1766,6 @@ input_53 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half
 input_54 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1964,10 +1788,6 @@ input_54 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Play begins with posession team in shotgun position
-
-# Base input with shotgun
 input_55 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -1990,9 +1810,6 @@ input_55 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in first half and home team losing, and shotgun
 input_56 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -2015,9 +1832,6 @@ input_56 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half and home team losing, and shotgun
 input_57 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -2040,9 +1854,6 @@ input_57 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half and home team losing, and shotgun
 input_58 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -2065,10 +1876,6 @@ input_58 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-# Changing time remaining and teams are tied
-
-# half second remaining 600 in first half, and shotgun
 input_59 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -2091,9 +1898,6 @@ input_59 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 600 in second half, and shotgun
 input_60 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 600,
@@ -2116,9 +1920,6 @@ input_60 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-# half second remaining 120 in the first half, and shotgun
 input_61 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -2141,10 +1942,6 @@ input_61 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-
-
-
-# original but changed yds to go to  1
 input_62 <- data.frame(
   "yardline_100" = 10,
   "half_seconds_remaining" = 120,
@@ -2167,63 +1964,7 @@ input_62 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# answer was go for it
-
-# Lions vs Vikings Real-Life Scenario
 input_63 <- data.frame(
-  "yardline_100" = 72,
-  "half_seconds_remaining" = 248,
-  "game_half" = "Half2",
-  "goal_to_go" = 0,
-  "ydstogo" = 1,
-  "play_type" = "pass",
-  "shotgun" = 0,
-  "timeout" = 1,
-  "posteam_score" = 23,
-  "defteam_score" = 21,
-  "away_score" = 21,
-  "home_score" = 23,
-  "season" = 2021,
-  "home_team" = "DET",
-  "posteam" = "DET",
-  "roof" = "dome",
-  "down" = 4,
-  "posteam_timeouts_remaining" = 1,
-  "defteam_timeouts_remaining" = 3
-)
-
-# answer was don't go for it
-
-
-# Lions vs Vikings Real-Life Scenario, but with a run
-input_64 <- data.frame(
-  "yardline_100" = 72,
-  "half_seconds_remaining" = 248,
-  "game_half" = "Half2",
-  "goal_to_go" = 0,
-  "ydstogo" = 1,
-  "play_type" = "run",
-  "shotgun" = 0,
-  "timeout" = 1,
-  "posteam_score" = 23,
-  "defteam_score" = 21,
-  "away_score" = 21,
-  "home_score" = 23,
-  "season" = 2021,
-  "home_team" = "DET",
-  "posteam" = "DET",
-  "roof" = "dome",
-  "down" = 4,
-  "posteam_timeouts_remaining" = 1,
-  "defteam_timeouts_remaining" = 3
-)
-
-# answer was don't go for it
-
-
-
-# Threshold for yardline_100
-input_65 <- data.frame(
   "yardline_100" = 63,
   "half_seconds_remaining" = 120,
   "game_half" = "Half1",
@@ -2245,10 +1986,7 @@ input_65 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# answer was go for it
-
-# Threshold for yardline_100
-input_66 <- data.frame(
+input_64 <- data.frame(
   "yardline_100" = 64,
   "half_seconds_remaining" = 120,
   "game_half" = "Half1",
@@ -2270,7 +2008,49 @@ input_66 <- data.frame(
   "defteam_timeouts_remaining" = 2
 )
 
-# answer was don't go for it
+input_65 <- data.frame(
+  "yardline_100" = 72,
+  "half_seconds_remaining" = 248,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "pass",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 23,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 23,
+  "season" = 2021,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 3
+)
+
+input_66 <- data.frame(
+  "yardline_100" = 72,
+  "half_seconds_remaining" = 248,
+  "game_half" = "Half2",
+  "goal_to_go" = 0,
+  "ydstogo" = 1,
+  "play_type" = "run",
+  "shotgun" = 0,
+  "timeout" = 1,
+  "posteam_score" = 23,
+  "defteam_score" = 21,
+  "away_score" = 21,
+  "home_score" = 23,
+  "season" = 2021,
+  "home_team" = "DET",
+  "posteam" = "DET",
+  "roof" = "dome",
+  "down" = 4,
+  "posteam_timeouts_remaining" = 1,
+  "defteam_timeouts_remaining" = 3
+)
 ```
 
 ```{r, cache=FALSE}
@@ -2285,8 +2065,7 @@ inputs <- rbind(
 )
 ```
 
-Run through list of scenarios and create data frame with scenario outputs
-Note: Need to change opposing team individually within function
+We will now run these scenarios through our function:
 
 ```{r, cache=FALSE}
 output <- gfi(inputs, stacked_glm = stacked_glm, svm_model = model_svm, tree = model_tree, glm_model = model_glm, oppteam = "CHI")
@@ -2307,10 +2086,6 @@ summary(go_for_it)
 dont_go_for_it <- results_summary %>% filter(go_for_it == "Don't Go For It")
 summary(dont_go_for_it)
 ```
-
-## Scenarios
-
-In addition to running a model for accuracy, we wanted to see what our model would predict in a variety of scenarios. We created a base scenario where the Detroit Lions are the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
 
 ## Results
 
@@ -2350,7 +2125,20 @@ In summary, our model generally recommends a team go for it on fourth down if th
 
 ## Scenarios of Interest
 
-TODO Mark Comment on specific scenarios
+```{r, cache=FALSE}
+interesting_scenarios <- results_summary[65:66, ]
+paged_table(interesting_scenarios)
+```
+
+In addition to all of the above scenarios we want to highlight four scenarios in particular. In the `input_65` and `input_66` we input the exact scenario that Coach Dan Campbell and the lions were facing last week against the Vikings. In these scenarios we wanted to examine what our model would’ve told Dan Campbell to do if he were to run the ball (`input_65`) or pass the ball (`input_66`). In both scenarios our model suggested to not go for it. In particular, when passing the ball in this scenario (this is actually what happened), we see a probability of success of 58%, with an expected net points of -0.33. This is mainly driven by the expected points for the opposing team upon failure of 3.29. This is mainly because they were so far backed up that a field goal is very likely no matter what the vikings did on their drive. Additionally, if he were to pass the ball our model would still suggest not to go for it and it would have a probability of success of 61% and an expected net points of -0.19. Thus, even by running the ball we would still advise against going for it. 
+
+```{r, cache=FALSE}
+interesting_scenarios_2 <- results_summary[63:64, ]
+paged_table(interesting_scenarios_2)
+```
+
+Finally, we wanted to find the threshold in total yards to go between not going for it and going for it. We input a base scenario that was a reasonable 4th down scenario (running the ball on 4th and 2) and only changed the total yards to go for that scenario. In `input_63` we see a suggestion to go for it even at 63 yards away from the endzone. It has a total of 0.04 expected net points. However, by backing up one yard (`input_64`) to be 64 yards away from the end zone our model now suggest to not go for it since the expected net points go down to -0.03.  The exact scenario input scan be found in the data frame output.
+
 
 # Acknowledged Issues and Next Steps
 
@@ -2368,14 +2156,29 @@ In general, we would prioritize expanding our model’s decision space in the ne
 
 # Conclusion
 
-TODO
+By using NFL Play-By-Play data, we have successfully built a user friendly function that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. We believe the function we've created is incredibly useful for coaches because it is a simple way to conduct an on-the-fly analysis of the decision whether to attempt a fourth down conversion or not. 
 
-By using NFL Play-By-Play data, we have successfully built a model that can assist NFL coaches and players in knowing if a fourth down conversion should be attempted. We believe the function we've created is incredibly useful for coaches because it is a simple way to conduct an on-the-fly analysis of the decision whether to attempt a fourth down conversion or not. 
+The model is reasonably accurate, with a kappa of around 0.45, and most impediments are due to the selection bias we've discussed above or the lack of incorporation of specific player performance. Furthermore, the model has a weakness because it does not account for field goal outcomes when recommending a fourth down conversion with positive but fewer than 3 expected net points. 
 
-The model is not terribly accurate, with a kappa of only around 0.45, mostly due to the selection bias we've discussed above. Furthermore, the model has a weakness because it does not account for field goal outcomes when recommending a fourth down conversion with positive but fewer than 3 expected net points. 
-
-This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent to further refine these models because this project can help football decision makers appropriately determine the best course of action which could then lead to winning the game.
+This analysis is important to coaches, players, and fans for many reasons. Money and resources should be spent to further refine these models because this project can help football decision makers appropriately determine the best course of action which could then lead to winning the game. The decision to punt, go for a field goal, or attempt a 4th down conversion can be the determining factor in if a team is going to win a game. Winning the game for a team is clearly the goal because the more games they win, the better of a chance they have of going to the playoffs and then making it to the Super Bowl. If a team wins a game during the playoff, they make more money. Fans, coaches and players will all be pleased, so it is an obviously good spot to be in. Anything that could potentially help teams get to this spot should be something that you would want to invest in. In addition to this, sports analytics is a huge industry. By being able to appropriately make decisions this model would be of great use to any team and sports analytics companies.
 
 # Contributors
 
 The following people contributed to this project: [Justin Applefield](https://github.com/japplefield), [Mark Cappaert](https://github.com/markcapp), [Natalie Rice](https://github.com/natrice123), [Sara Weber](https://github.com/saraweb33), [Natalie Seiler](https://github.com/natalieseiler)
+
+<script>
+$( "input.hideshow" ).each( function ( index, button ) {
+  button.value = 'Hide Output';
+  $( button ).click( function () {
+    var target = this.nextSibling ? this : this.parentNode;
+    target = target.nextSibling.nextSibling.nextSibling.nextSibling
+    if ( target.style.display == 'block' || target.style.display == '' ) {
+      target.style.display = 'none';
+      this.value = 'Show Output';
+    } else {
+      target.style.display = 'block';
+      this.value = 'Hide Output';
+    }
+  } );
+} );
+</script>
