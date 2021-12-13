@@ -569,7 +569,7 @@ gfi <- function(df, stacked_glm, svm_model, tree, glm_model, oppteam) {
 
 ## Scenarios
 
-Now that the function has been defined we will create a variety of scenarios and apply the function to them. We created a base scenario where the Detroit Lions are the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the third down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
+Now that the function has been defined we will create a variety of scenarios and apply the function to them. We created a base scenario where the Detroit Lions are the home team with possession of the ball, on the 10 yard line to get to the opponent's end zone, 2 min left in the first half, running the ball. Detroit is up 21 to 3, playing the Chicago Bears in 2018. They are not in a shotgun formation, it is the fourth down, with 2 timeouts remaining for both teams. There are 5 yards to get the first down. For this scenario, our model predicted to go for it. 
 
 
 ```{r, cache=FALSE}
